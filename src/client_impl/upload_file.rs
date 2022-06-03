@@ -32,7 +32,8 @@ where
         let file_meta = data.file.metadata().await.map_err(Error::FileSystemError)?;
         let file_size = file_meta.len();
 
-        let user_info = self.user_info.ok_or_else(|| Error::UserInfoNotCreated)?;
+        let wallet_pubkey = self.wallet.pubkey();
+        let (user_info, _) = derived_addresses::user_info(&wallet_pubkey);
 
         let selected_account = self.get_storage_account(&storage_account_key).await?;
 

@@ -29,7 +29,7 @@ where
     T: Signer + Send + Sync,
 {
     pub async fn create_storage_account<'a, 'b>(
-        &'a mut self,
+        &'a self,
         name: &'b str,
         size: Byte,
     ) -> ShadowDriveResult<CreateStorageAccountResponse<'_>> {
@@ -55,8 +55,7 @@ where
                 ..
             }) => {
                 // this is what rpc_client.get_account() returns if the account doesn't exist
-                // maybe store user_info Pubkey here?
-                self.user_info = Some(user_info);
+                // assume 0 seed
             }
             Err(err) => {
                 //a different rpc error occurred
