@@ -7,6 +7,11 @@ use crate::error::Error;
 pub type ShadowDriveResult<T> = Result<T, Error>;
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct ShdwDriveResponse<'a> {
+    pub txid: Cow<'a, str>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct CreateStorageAccountResponse<'a> {
     pub shdw_bucket: Option<Cow<'a, str>>,
     pub transaction_signature: Cow<'a, str>,

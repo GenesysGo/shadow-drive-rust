@@ -4,7 +4,9 @@ use byte_unit::Byte;
 use shadow_drive_rust::{models::ShdwFile, Client};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
+    commitment_config::{CommitmentConfig, CommitmentLevel},
     pubkey::Pubkey,
+    signature::Keypair,
     signer::{keypair::read_keypair_file, Signer},
 };
 use tokio::io::AsyncSeekExt;
@@ -20,11 +22,50 @@ async fn main() {
         shadow_drive_rust::derived_addresses::storage_account(&pubkey, 0);
 
     //create shdw drive client
-    let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
-    let shdw_drive_client = Client::new(keypair, solana_rpc)
-        .await
-        .expect("failed to create shdw drive client");
+    let solana_rpc = RpcClient::new_with_commitment(
+        "https://ssc-dao.genesysgo.net",
+        CommitmentConfig {
+            commitment: CommitmentLevel::Confirmed,
+        },
+    );
+    let shdw_drive_client = Client::new(keypair, solana_rpc);
 
+    add_storage_test(shdw_drive_client, storage_account_key).await;
+}
+
+async fn add_storage_test<T: Signer + Send + Sync>(
+    shdw_drive_client: Client<T>,
+    storage_account_key: Pubkey,
+) {
+    let storage_account = shdw_drive_client
+        .get_storage_account(&storage_account_key)
+        .await
+        .expect("failed to get storage account");
+
+    println!("previous size: {:?}", storage_account.storage);
+
+    let add_storage_response = shdw_drive_client
+        .add_storage(
+            &storage_account_key,
+            Byte::from_str("1MB").expect("invalid byte string"),
+        )
+        .await
+        .expect("error adding storage");
+
+    println!("txn id: {:?}", add_storage_response.txid);
+
+    let storage_account = shdw_drive_client
+        .get_storage_account(&storage_account_key)
+        .await
+        .expect("failed to get storage account");
+
+    println!("new size: {:?}", storage_account.storage);
+}
+
+async fn upload_file_test<T: Signer + Send + Sync>(
+    shdw_drive_client: Client<T>,
+    storage_account_key: Pubkey,
+) {
     let file = tokio::fs::File::open("example.png")
         .await
         .expect("failed to open file");
