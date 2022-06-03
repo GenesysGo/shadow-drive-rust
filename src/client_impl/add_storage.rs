@@ -32,7 +32,7 @@ where
         &self,
         storage_account_key: &Pubkey,
         size: Byte,
-    ) -> ShadowDriveResult<ShdwDriveResponse> {
+    ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
         let size_as_bytes: u64 = size
             .get_bytes()
             .try_into()

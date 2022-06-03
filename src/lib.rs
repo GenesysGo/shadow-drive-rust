@@ -1,6 +1,9 @@
+use solana_sdk::{
+    pubkey::Pubkey
+};
 use async_trait::async_trait;
 use byte_unit::Byte;
-use models::{CreateStorageAccountResponse, ShadowDriveResult};
+use models::{CreateStorageAccountResponse, ShadowDriveResult, ShdwDriveResponse};
 
 mod client_impl;
 pub mod constants;
@@ -17,4 +20,9 @@ pub trait ShadowDriveClient {
         name: &str,
         size: Byte,
     ) -> ShadowDriveResult<CreateStorageAccountResponse>;
+
+    async fn request_delete_storage_account(
+        &self,
+        storage_account_key: &Pubkey,
+    ) -> ShadowDriveResult<ShdwDriveResponse>;
 }
