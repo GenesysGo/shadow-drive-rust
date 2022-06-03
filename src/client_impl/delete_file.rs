@@ -1,15 +1,17 @@
+use std::str::FromStr;
 use std::borrow::Cow;
 use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
+use serde_json::{json};
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
-use shadow_drive_user_staking::instruction::RequestDeleteAccount;
+use shadow_drive_user_staking::instruction::RequestDeleteFile;
 use solana_sdk::{
     instruction::Instruction, signer::Signer, pubkey::Pubkey, transaction::Transaction,
 };
 
 use super::Client;
 use crate::{
-    constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
+    constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT, SHDW_DRIVE_ENDPOINT},
     models::*,
 };
 
@@ -17,24 +19,40 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn request_delete_storage_account<'a>(
-        &'a self,
+    pub async fn delete_file(
+        &self,
         storage_account_key: &Pubkey,
+        url: String,
     ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
 
         let selected_account = self.get_storage_account(&storage_account_key).await?;
 
-        let accounts = shdw_drive_accounts::RequestDeleteAccount {
+        let body = serde_json::to_string(&json!({ "location": url })).unwrap();
+
+        let response = self
+            .http_client
+            .post(format!("{}/get-object-data", SHDW_DRIVE_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .body(body)
+            .send()
+            .await?;
+
+        let response = response.json::<FileDataResponse>().await?;
+
+        let file_key = Pubkey::from_str(&response.file_data.file_account_pubkey)?;
+
+        let accounts = shdw_drive_accounts::RequestDeleteFile {
             storage_config: *STORAGE_CONFIG_PDA,
             storage_account: *storage_account_key,
+            file: file_key,
             owner: selected_account.owner_1,
             token_mint: TOKEN_MINT,
             system_program: system_program::ID,
         };
 
-        let args = RequestDeleteAccount { };
+        let args = RequestDeleteFile { };
 
         let instruction = Instruction {
             program_id: PROGRAM_ADDRESS,

@@ -21,7 +21,7 @@ pub trait ShadowDriveClient {
         size: Byte,
     ) -> ShadowDriveResult<CreateStorageAccountResponse>;
 
-    async fn request_delete_storage_account(
+    async fn delete_storage_account(
         &self,
         storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse>;

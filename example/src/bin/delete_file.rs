@@ -1,10 +1,11 @@
-use std::{str::FromStr};
-use shadow_drive_rust::{ Client};
+use byte_unit::Byte;
+use shadow_drive_rust::{models::ShdwFile, Client};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     pubkey::Pubkey,
-    signer::{keypair::read_keypair_file},
+    signer::{keypair::read_keypair_file, Signer},
 };
+use std::str::FromStr;
 
 const KEYPAIR_PATH: &str = "keypair.json";
 
@@ -13,16 +14,21 @@ async fn main() {
     //load keypair from file
     let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     let storage_account_key =
-        Pubkey::from_str("GHSNTDyMmay7xDjBNd9dqoHTGD3neioLk5VJg2q3fJqr").unwrap();
+        Pubkey::from_str("B7Qk2omAvchkePhzHubCVQuVpZHcieqPQCwFxeeBZGuT").unwrap();
 
     //create shdw drive client
     let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
     let shdw_drive_client = Client::new(keypair, solana_rpc);
 
-    let response = shdw_drive_client
-        .request_delete_storage_account(&storage_account_key)
+    let url = String::from(
+        "https://shdw-drive.genesysgo.net/B7Qk2omAvchkePhzHubCVQuVpZHcieqPQCwFxeeBZGuT/hey.txt",
+    );
+
+    //delete file
+    let delete_file_response = shdw_drive_client
+        .delete_file(&storage_account_key, url)
         .await
         .expect("failed to request storage account deletion");
 
-    println!("Request Delete Storage Account complete {:?}", response);
+    println!("Delete file complete {:?}", delete_file_response);
 }

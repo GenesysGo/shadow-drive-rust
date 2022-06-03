@@ -29,3 +29,16 @@ pub struct ShadowUploadResponse<'a> {
     pub finalized_location: Cow<'a, str>,
     pub transaction_signature: Cow<'a, str>,
 }
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct FileDataResponse {
+    pub file_data: FileData
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct FileData {
+    pub file_account_pubkey: String,
+    pub owner_account_pubkey: String,
+    pub storage_account_pubkey: String,
+}

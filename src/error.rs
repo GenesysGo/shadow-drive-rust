@@ -4,6 +4,7 @@ use solana_client::client_error::ClientError;
 use solana_sdk::signer::SignerError;
 use std::io::Error as IoError;
 use tokio::task::JoinError;
+use solana_sdk::pubkey::ParsePubkeyError;
 
 #[derive(Debug)]
 pub enum Error {
@@ -21,6 +22,7 @@ pub enum Error {
     FileValidationError(Vec<FileError>),
     UserInfoNotCreated,
     FileSystemError(std::io::Error),
+    ParsePubkeyError(ParsePubkeyError),
 }
 
 #[derive(Debug)]
@@ -56,5 +58,11 @@ impl From<AnchorError> for Error {
 impl From<ReqwestError> for Error {
     fn from(signer_error: ReqwestError) -> Self {
         Self::ReqwestError(signer_error)
+    }
+}
+
+impl From<ParsePubkeyError> for Error {
+    fn from(parse_pubkey_error: ParsePubkeyError) -> Self {
+        Self::ParsePubkeyError(parse_pubkey_error)
     }
 }
