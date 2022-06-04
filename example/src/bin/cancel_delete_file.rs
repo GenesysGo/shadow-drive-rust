@@ -30,5 +30,8 @@ async fn main() {
         .await
         .expect("failed to request storage account deletion");
 
-    println!("Unmark delete file complete {:?}", cancel_delete_file_response);
+    println!(
+        "Unmark delete file complete {:?}",
+        cancel_delete_file_response
+    );
 }
