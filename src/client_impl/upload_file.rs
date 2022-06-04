@@ -24,9 +24,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn upload_file<'a>(
+    pub async fn upload_file<'a, 'b>(
         &'a self,
-        storage_account_key: &Pubkey,
+        storage_account_key: &'b Pubkey,
         mut data: ShdwFile,
     ) -> ShadowDriveResult<ShadowUploadResponse<'_>> {
         let file_meta = data.file.metadata().await.map_err(Error::FileSystemError)?;
@@ -35,7 +35,7 @@ where
         let wallet_pubkey = self.wallet.pubkey();
         let (user_info, _) = derived_addresses::user_info(&wallet_pubkey);
 
-        let selected_account = self.get_storage_account(&storage_account_key).await?;
+        let selected_account = self.get_storage_account(storage_account_key).await?;
 
         let mut errors = Vec::new();
         if file_size > 1_073_741_824 {

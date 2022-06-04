@@ -28,9 +28,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn add_storage<'a>(
+    pub async fn add_storage<'a, 'b>(
         &'a self,
-        storage_account_key: &Pubkey,
+        storage_account_key: &'b Pubkey,
         size: Byte,
     ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
         let size_as_bytes: u64 = size

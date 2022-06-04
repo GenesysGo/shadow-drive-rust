@@ -26,9 +26,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn reduce_storage(
-        &self,
-        storage_account_key: &Pubkey,
+    pub async fn reduce_storage<'a, 'b>(
+        &'a self,
+        storage_account_key: &'b Pubkey,
         size: Byte,
     ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
         let size_as_bytes: u64 = size
@@ -39,8 +39,8 @@ where
         let wallet_pubkey = self.wallet.pubkey();
 
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
-        let (unstake_account, _) = derived_addresses::unstake_account(&storage_account_key);
-        let (unstake_info, _) = derived_addresses::unstake_info(&storage_account_key);
+        let (unstake_account, _) = derived_addresses::unstake_account(storage_account_key);
+        let (unstake_info, _) = derived_addresses::unstake_info(storage_account_key);
 
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
         let (stake_account, _) = derived_addresses::stake_account(storage_account_key);

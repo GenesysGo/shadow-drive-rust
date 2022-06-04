@@ -20,9 +20,9 @@ where
             .map_err(Error::AnchorError)
     }
 
-    pub async fn get_storage_accounts(
-        &self,
-        owner: &Pubkey,
+    pub async fn get_storage_accounts<'a, 'b>(
+        &'a self,
+        owner: &'b Pubkey,
     ) -> ShadowDriveResult<Vec<StorageAccount>> {
         let account_type_filter = RpcFilterType::Memcmp(Memcmp {
             offset: 0,

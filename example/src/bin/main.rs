@@ -30,7 +30,19 @@ async fn main() {
     );
     let shdw_drive_client = Client::new(keypair, solana_rpc);
 
-    reduce_storage_test(shdw_drive_client, storage_account_key).await;
+    list_objects_test(shdw_drive_client, storage_account_key).await;
+}
+
+async fn list_objects_test<T: Signer + Send + Sync>(
+    shdw_drive_client: Client<T>,
+    storage_account_key: Pubkey,
+) {
+    let objects = shdw_drive_client
+        .list_objects(&storage_account_key)
+        .await
+        .expect("failed to list objects");
+
+    println!("objects {:?}", objects);
 }
 
 async fn add_storage_test<T: Signer + Send + Sync>(

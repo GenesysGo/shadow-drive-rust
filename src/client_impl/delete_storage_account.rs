@@ -1,11 +1,11 @@
-use std::borrow::Cow;
-use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction::RequestDeleteAccount;
+use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::{
-    instruction::Instruction, signer::Signer, pubkey::Pubkey, transaction::Transaction,
+    instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
+use std::borrow::Cow;
 
 use super::Client;
 use crate::{
@@ -17,9 +17,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn delete_storage_account(
-        &self,
-        storage_account_key: &Pubkey,
+    pub async fn delete_storage_account<'a, 'b: 'a>(
+        &'a self,
+        storage_account_key: &'b Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
@@ -34,7 +34,7 @@ where
             system_program: system_program::ID,
         };
 
-        let args = RequestDeleteAccount { };
+        let args = RequestDeleteAccount {};
 
         let instruction = Instruction {
             program_id: PROGRAM_ADDRESS,

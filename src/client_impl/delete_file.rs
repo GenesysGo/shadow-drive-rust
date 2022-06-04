@@ -1,17 +1,17 @@
-use std::str::FromStr;
-use std::borrow::Cow;
-use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
-use serde_json::{json};
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
+use serde_json::json;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction::RequestDeleteFile;
+use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::{
-    instruction::Instruction, signer::Signer, pubkey::Pubkey, transaction::Transaction,
+    instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
+use std::borrow::Cow;
+use std::str::FromStr;
 
 use super::Client;
 use crate::{
-    constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT, SHDW_DRIVE_ENDPOINT},
+    constants::{PROGRAM_ADDRESS, SHDW_DRIVE_ENDPOINT, STORAGE_CONFIG_PDA, TOKEN_MINT},
     models::*,
 };
 
@@ -19,9 +19,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn delete_file(
-        &self,
-        storage_account_key: &Pubkey,
+    pub async fn delete_file<'a, 'b>(
+        &'a self,
+        storage_account_key: &'b Pubkey,
         url: String,
     ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
         let wallet = &self.wallet;
@@ -52,7 +52,7 @@ where
             system_program: system_program::ID,
         };
 
-        let args = RequestDeleteFile { };
+        let args = RequestDeleteFile {};
 
         let instruction = Instruction {
             program_id: PROGRAM_ADDRESS,

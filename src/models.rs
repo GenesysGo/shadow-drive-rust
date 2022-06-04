@@ -32,7 +32,7 @@ pub struct ShadowUploadResponse<'a> {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct FileDataResponse {
-    pub file_data: FileData
+    pub file_data: FileData,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -41,4 +41,9 @@ pub struct FileData {
     pub file_account_pubkey: String,
     pub owner_account_pubkey: String,
     pub storage_account_pubkey: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ListObjectsResponse<'a> {
+    pub keys: Vec<Cow<'a, str>>,
 }
