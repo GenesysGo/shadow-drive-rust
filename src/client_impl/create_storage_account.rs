@@ -28,7 +28,7 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn create_storage_account<'a, 'b>(
+    pub async fn create_storage_account<'a, 'b: 'a>(
         &'a self,
         name: &'b str,
         size: Byte,

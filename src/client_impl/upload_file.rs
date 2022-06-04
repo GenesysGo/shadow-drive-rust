@@ -24,8 +24,8 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn upload_file<'a, 'b>(
-        &self,
+    pub async fn upload_file<'a>(
+        &'a self,
         storage_account_key: &Pubkey,
         mut data: ShdwFile,
     ) -> ShadowDriveResult<ShadowUploadResponse<'_>> {

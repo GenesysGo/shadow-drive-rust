@@ -3,17 +3,19 @@ use solana_sdk::signer::Signer;
 
 mod add_storage;
 mod create_storage_account;
-mod get_storage_account;
-mod upload_file;
 mod delete_file;
 mod delete_storage_account;
+mod get_storage_account;
+mod reduce_storage;
+mod upload_file;
 
 pub use add_storage::*;
 pub use create_storage_account::*;
-pub use get_storage_account::*;
-pub use upload_file::*;
 pub use delete_file::*;
 pub use delete_storage_account::*;
+pub use get_storage_account::*;
+pub use reduce_storage::*;
+pub use upload_file::*;
 
 pub struct Client<T>
 where

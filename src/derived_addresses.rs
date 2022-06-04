@@ -33,3 +33,17 @@ pub fn stake_account(storage_account: &Pubkey) -> (Pubkey, u8) {
         &PROGRAM_ADDRESS,
     )
 }
+
+pub fn unstake_account(storage_account: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[&b"unstake-account"[..], &storage_account.to_bytes()],
+        &PROGRAM_ADDRESS,
+    )
+}
+
+pub fn unstake_info(storage_account: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[&b"unstake-info"[..], &storage_account.to_bytes()],
+        &PROGRAM_ADDRESS,
+    )
+}

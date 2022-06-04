@@ -30,7 +30,7 @@ async fn main() {
     );
     let shdw_drive_client = Client::new(keypair, solana_rpc);
 
-    add_storage_test(shdw_drive_client, storage_account_key).await;
+    reduce_storage_test(shdw_drive_client, storage_account_key).await;
 }
 
 async fn add_storage_test<T: Signer + Send + Sync>(
@@ -48,6 +48,35 @@ async fn add_storage_test<T: Signer + Send + Sync>(
         .add_storage(
             &storage_account_key,
             Byte::from_str("1MB").expect("invalid byte string"),
+        )
+        .await
+        .expect("error adding storage");
+
+    println!("txn id: {:?}", add_storage_response.txid);
+
+    let storage_account = shdw_drive_client
+        .get_storage_account(&storage_account_key)
+        .await
+        .expect("failed to get storage account");
+
+    println!("new size: {:?}", storage_account.storage);
+}
+
+async fn reduce_storage_test<T: Signer + Send + Sync>(
+    shdw_drive_client: Client<T>,
+    storage_account_key: Pubkey,
+) {
+    let storage_account = shdw_drive_client
+        .get_storage_account(&storage_account_key)
+        .await
+        .expect("failed to get storage account");
+
+    println!("previous size: {:?}", storage_account.storage);
+
+    let add_storage_response = shdw_drive_client
+        .reduce_storage(
+            &storage_account_key,
+            Byte::from_str("2MB").expect("invalid byte string"),
         )
         .await
         .expect("error adding storage");
