@@ -24,9 +24,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn upload_file<'a, 'b>(
+    pub async fn upload_file<'a>(
         &'a self,
-        storage_account_key: &'b Pubkey,
+        storage_account_key: Pubkey,
         mut data: ShdwFile,
     ) -> ShadowDriveResult<ShadowUploadResponse<'_>> {
         let file_meta = data.file.metadata().await.map_err(Error::FileSystemError)?;
@@ -77,11 +77,11 @@ where
 
         //construct & partial sign txn
         let file_seed = selected_account.init_counter;
-        let (file_acct, _) = derived_addresses::file_account(storage_account_key, file_seed);
+        let (file_acct, _) = derived_addresses::file_account(&storage_account_key, file_seed);
 
         let accounts = shdw_drive_accounts::StoreFile {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: *storage_account_key,
+            storage_account: storage_account_key,
             user_info,
             file: file_acct,
             owner: selected_account.owner_1,

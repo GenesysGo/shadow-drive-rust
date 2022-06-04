@@ -19,15 +19,15 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn delete_file<'a, 'b>(
+    pub async fn delete_file<'a>(
         &'a self,
-        storage_account_key: &'b Pubkey,
+        storage_account_key: Pubkey,
         url: String,
     ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
 
-        let selected_account = self.get_storage_account(&storage_account_key).await?;
+        let selected_account = self.get_storage_account(storage_account_key).await?;
 
         let body = serde_json::to_string(&json!({ "location": url })).unwrap();
 
@@ -45,7 +45,7 @@ where
 
         let accounts = shdw_drive_accounts::RequestDeleteFile {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: *storage_account_key,
+            storage_account: storage_account_key,
             file: file_key,
             owner: selected_account.owner_1,
             token_mint: TOKEN_MINT,

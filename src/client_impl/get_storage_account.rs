@@ -14,15 +14,15 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn get_storage_account(&self, key: &Pubkey) -> ShadowDriveResult<StorageAccount> {
-        let account_info = self.rpc_client.get_account(key)?;
+    pub async fn get_storage_account(&self, key: Pubkey) -> ShadowDriveResult<StorageAccount> {
+        let account_info = self.rpc_client.get_account(&key)?;
         StorageAccount::try_deserialize(&mut account_info.data.as_slice())
             .map_err(Error::AnchorError)
     }
 
-    pub async fn get_storage_accounts<'a, 'b>(
+    pub async fn get_storage_accounts<'a>(
         &'a self,
-        owner: &'b Pubkey,
+        owner: Pubkey,
     ) -> ShadowDriveResult<Vec<StorageAccount>> {
         let account_type_filter = RpcFilterType::Memcmp(Memcmp {
             offset: 0,

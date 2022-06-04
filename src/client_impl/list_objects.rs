@@ -15,9 +15,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn list_objects<'a, 'b>(
+    pub async fn list_objects<'a>(
         &'a self,
-        storage_account_key: &'b Pubkey,
+        storage_account_key: Pubkey,
     ) -> ShadowDriveResult<Vec<Cow<'_, str>>> {
         let response = self
             .http_client

@@ -17,7 +17,7 @@ async fn main() {
     let shdw_drive_client = Client::new(keypair, solana_rpc);
 
     let response = shdw_drive_client
-        .delete_storage_account(&storage_account_key)
+        .delete_storage_account(storage_account_key)
         .await
         .expect("failed to request storage account deletion");
 

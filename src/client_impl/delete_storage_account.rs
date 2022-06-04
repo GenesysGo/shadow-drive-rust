@@ -17,18 +17,18 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn delete_storage_account<'a, 'b: 'a>(
+    pub async fn delete_storage_account<'a>(
         &'a self,
-        storage_account_key: &'b Pubkey,
+        storage_account_key: Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
 
-        let selected_account = self.get_storage_account(&storage_account_key).await?;
+        let selected_account = self.get_storage_account(storage_account_key).await?;
 
         let accounts = shdw_drive_accounts::RequestDeleteAccount {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: *storage_account_key,
+            storage_account: storage_account_key,
             owner: selected_account.owner_1,
             token_mint: TOKEN_MINT,
             system_program: system_program::ID,
