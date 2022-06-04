@@ -19,7 +19,7 @@ async fn main() {
     let response = shdw_drive_client
         .cancel_delete_storage_account(storage_account_key)
         .await
-        .expect("failed to request storage account deletion");
+        .expect("failed to cancel storage account deletion");
 
     println!("Unmark delete storage account complete {:?}", response);
 }
