@@ -1,10 +1,10 @@
 use anchor_lang::error::Error as AnchorError;
 use reqwest::Error as ReqwestError;
 use solana_client::client_error::ClientError;
+use solana_sdk::pubkey::ParsePubkeyError;
 use solana_sdk::signer::SignerError;
 use std::io::Error as IoError;
 use tokio::task::JoinError;
-use solana_sdk::pubkey::ParsePubkeyError;
 
 #[derive(Debug)]
 pub enum Error {
@@ -23,6 +23,7 @@ pub enum Error {
     UserInfoNotCreated,
     FileSystemError(std::io::Error),
     ParsePubkeyError(ParsePubkeyError),
+    NotFileOwner,
 }
 
 #[derive(Debug)]

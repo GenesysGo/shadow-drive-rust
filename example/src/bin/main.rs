@@ -30,7 +30,7 @@ async fn main() {
     );
     let shdw_drive_client = Client::new(keypair, solana_rpc);
 
-    make_storage_immutable_test(shdw_drive_client, storage_account_key).await;
+    list_objects_test(shdw_drive_client, storage_account_key).await;
 }
 
 async fn list_objects_test<T: Signer + Send + Sync>(

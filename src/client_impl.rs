@@ -1,3 +1,4 @@
+use serde_json::{json, Value};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::signer::Signer;
 
@@ -5,6 +6,7 @@ mod add_storage;
 mod create_storage_account;
 mod delete_file;
 mod delete_storage_account;
+mod edit_file;
 mod get_storage_account;
 mod list_objects;
 mod make_storage_immutable;
@@ -15,11 +17,18 @@ pub use add_storage::*;
 pub use create_storage_account::*;
 pub use delete_file::*;
 pub use delete_storage_account::*;
+pub use edit_file::*;
 pub use get_storage_account::*;
 pub use list_objects::*;
 pub use make_storage_immutable::*;
 pub use reduce_storage::*;
 pub use upload_file::*;
+
+use crate::{
+    constants::SHDW_DRIVE_ENDPOINT,
+    error::Error,
+    models::{FileDataResponse, ShadowDriveResult},
+};
 
 pub struct Client<T>
 where
@@ -40,5 +49,26 @@ where
             rpc_client,
             http_client: reqwest::Client::new(),
         }
+    }
+
+    async fn get_object_data(&self, location: &str) -> ShadowDriveResult<FileDataResponse> {
+        let response = self
+            .http_client
+            .post(format!("{}/get-object-data", SHDW_DRIVE_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .json(&json!({ "location": location }))
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(Error::ShadowDriveServerError {
+                status: response.status().as_u16(),
+                message: response.json::<Value>().await?,
+            });
+        }
+
+        let response = response.json::<FileDataResponse>().await?;
+
+        Ok(response)
     }
 }

@@ -1,5 +1,4 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
-use serde_json::json;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction::RequestDeleteFile;
 use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
@@ -11,7 +10,7 @@ use std::str::FromStr;
 
 use super::Client;
 use crate::{
-    constants::{PROGRAM_ADDRESS, SHDW_DRIVE_ENDPOINT, STORAGE_CONFIG_PDA, TOKEN_MINT},
+    constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
     models::*,
 };
 
@@ -29,17 +28,7 @@ where
 
         let selected_account = self.get_storage_account(storage_account_key).await?;
 
-        let body = serde_json::to_string(&json!({ "location": url })).unwrap();
-
-        let response = self
-            .http_client
-            .post(format!("{}/get-object-data", SHDW_DRIVE_ENDPOINT))
-            .header("Content-Type", "application/json")
-            .body(body)
-            .send()
-            .await?;
-
-        let response = response.json::<FileDataResponse>().await?;
+        let response = self.get_object_data(&url).await?;
 
         let file_key = Pubkey::from_str(&response.file_data.file_account_pubkey)?;
 
