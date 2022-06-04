@@ -3,6 +3,7 @@ use solana_client::rpc_client::RpcClient;
 use solana_sdk::signer::Signer;
 
 mod add_storage;
+mod cancel_delete_file;
 mod create_storage_account;
 mod delete_file;
 mod delete_storage_account;
@@ -14,6 +15,7 @@ mod reduce_storage;
 mod upload_file;
 
 pub use add_storage::*;
+pub use cancel_delete_file::*;
 pub use create_storage_account::*;
 pub use delete_file::*;
 pub use delete_storage_account::*;

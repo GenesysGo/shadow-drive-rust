@@ -1,9 +1,7 @@
-use solana_sdk::{
-    pubkey::Pubkey
-};
 use async_trait::async_trait;
 use byte_unit::Byte;
 use models::{CreateStorageAccountResponse, ShadowDriveResult, ShdwDriveResponse};
+use solana_sdk::pubkey::Pubkey;
 
 mod client_impl;
 pub mod constants;
