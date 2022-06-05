@@ -15,6 +15,7 @@ mod list_objects;
 mod make_storage_immutable;
 mod reduce_storage;
 mod upload_file;
+mod upload_multiple_files;
 
 pub use add_storage::*;
 pub use cancel_delete_file::*;
@@ -29,6 +30,7 @@ pub use list_objects::*;
 pub use make_storage_immutable::*;
 pub use reduce_storage::*;
 pub use upload_file::*;
+pub use upload_multiple_files::*;
 
 use crate::{
     constants::SHDW_DRIVE_ENDPOINT,

@@ -30,6 +30,26 @@ pub struct ShadowUploadResponse {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub(crate) struct ShdwDriveBatchServerResponse {
+    pub _finalized_locations: Vec<String>,
+    pub transaction_signature: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub enum BatchUploadStatus {
+    Uploaded,
+    AlreadyExists,
+    Error(String),
+}
+#[derive(Clone, Debug, Deserialize)]
+pub struct ShadowBatchUploadResponse {
+    pub file_name: String,
+    pub status: BatchUploadStatus,
+    pub location: Option<String>,
+    pub transaction_signature: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct FileDataResponse {
     pub file_data: FileData,
 }
