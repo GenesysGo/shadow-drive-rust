@@ -21,7 +21,7 @@ where
 {
     pub async fn claim_stake(
         &self,
-        storage_account_key: Pubkey,
+        storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
@@ -33,7 +33,7 @@ where
 
         let accounts = shdw_drive_accounts::ClaimStake {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             unstake_info: unstake_info_account,
             unstake_account,
             owner: selected_account.owner_1,

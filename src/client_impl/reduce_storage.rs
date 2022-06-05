@@ -26,7 +26,7 @@ where
 {
     pub async fn reduce_storage(
         &self,
-        storage_account_key: Pubkey,
+        storage_account_key: &Pubkey,
         size: Byte,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
         let size_as_bytes: u64 = size
@@ -47,7 +47,7 @@ where
 
         let accounts = shdw_drive_accounts::DecreaseStorage {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             unstake_info,
             unstake_account,
             owner: selected_storage_acct.owner_1,

@@ -26,7 +26,7 @@ where
 {
     pub async fn upload_file(
         &self,
-        storage_account_key: Pubkey,
+        storage_account_key: &Pubkey,
         mut data: ShdwFile,
     ) -> ShadowDriveResult<ShadowUploadResponse> {
         let file_meta = data.file.metadata().await.map_err(Error::FileSystemError)?;
@@ -81,7 +81,7 @@ where
 
         let accounts = shdw_drive_accounts::StoreFile {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             user_info,
             file: file_acct,
             owner: selected_account.owner_1,

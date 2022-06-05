@@ -26,9 +26,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn add_storage<'a>(
-        &'a self,
-        storage_account_key: Pubkey,
+    pub async fn add_storage(
+        &self,
+        storage_account_key: &Pubkey,
         size: Byte,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
         let size_as_bytes: u64 = size
@@ -65,7 +65,7 @@ where
 
         let accounts = shdw_drive_accounts::IncreaseStorage {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             owner: selected_storage_acct.owner_1,
             owner_ata,
             stake_account,

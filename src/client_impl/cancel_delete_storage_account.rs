@@ -19,7 +19,7 @@ where
 {
     pub async fn cancel_delete_storage_account(
         &self,
-        storage_account_key: Pubkey,
+        storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
@@ -29,7 +29,7 @@ where
 
         let accounts = shdw_drive_accounts::UnmarkDeleteAccount {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             stake_account,
             owner: selected_account.owner_1,
             token_mint: TOKEN_MINT,

@@ -14,7 +14,7 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn get_storage_account(&self, key: Pubkey) -> ShadowDriveResult<StorageAccount> {
+    pub async fn get_storage_account(&self, key: &Pubkey) -> ShadowDriveResult<StorageAccount> {
         let account_info = self.rpc_client.get_account(&key)?;
         StorageAccount::try_deserialize(&mut account_info.data.as_slice())
             .map_err(Error::AnchorError)
@@ -22,7 +22,7 @@ where
 
     pub async fn get_storage_accounts(
         &self,
-        owner: Pubkey,
+        owner: &Pubkey,
     ) -> ShadowDriveResult<Vec<StorageAccount>> {
         let account_type_filter = RpcFilterType::Memcmp(Memcmp {
             offset: 0,

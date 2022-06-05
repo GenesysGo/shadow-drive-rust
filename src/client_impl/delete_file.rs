@@ -19,7 +19,7 @@ where
 {
     pub async fn delete_file(
         &self,
-        storage_account_key: Pubkey,
+        storage_account_key: &Pubkey,
         url: String,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
         let wallet = &self.wallet;
@@ -33,7 +33,7 @@ where
 
         let accounts = shdw_drive_accounts::RequestDeleteFile {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             file: file_key,
             owner: selected_account.owner_1,
             token_mint: TOKEN_MINT,

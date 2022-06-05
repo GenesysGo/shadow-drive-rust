@@ -24,7 +24,7 @@ where
 {
     pub async fn make_storage_immutable(
         &self,
-        storage_account_key: Pubkey,
+        storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
         let wallet_pubkey = self.wallet.pubkey();
 
@@ -35,7 +35,7 @@ where
 
         let accounts = shdw_drive_accounts::MakeAccountImmutable {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             owner: selected_storage_acct.owner_1,
             owner_ata,
             stake_account,

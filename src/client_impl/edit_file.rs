@@ -26,7 +26,7 @@ where
 {
     pub async fn edit_file(
         &self,
-        storage_account_key: Pubkey,
+        storage_account_key: &Pubkey,
         url: &str,
         mut data: ShdwFile,
     ) -> ShadowDriveResult<ShadowUploadResponse> {
@@ -87,7 +87,7 @@ where
         //construct & partial sign txn
         let accounts = shdw_drive_accounts::EditFile {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             file: file_acct,
             owner: selected_account.owner_1,
             uploader: UPLOADER,

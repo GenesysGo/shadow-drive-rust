@@ -19,9 +19,9 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn cancel_delete_file<'a>(
-        &'a self,
-        storage_account_key: Pubkey,
+    pub async fn cancel_delete_file(
+        &self,
+        storage_account_key: &Pubkey,
         url: String,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
         let wallet = &self.wallet;
@@ -40,7 +40,7 @@ where
 
         let accounts = shdw_drive_accounts::UnmarkDeleteFile {
             storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: storage_account_key,
+            storage_account: *storage_account_key,
             file: file_key,
             stake_account,
             owner: selected_account.owner_1,
