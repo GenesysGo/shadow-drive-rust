@@ -19,7 +19,7 @@ pub struct CreateStorageAccountResponse {
 /// A ShdwFile is the pairing of a filename w/ bytes to be uploaded
 #[derive(Debug)]
 pub struct ShdwFile {
-    pub name: Option<String>,
+    pub name: String,
     pub file: fs::File,
 }
 
@@ -31,7 +31,7 @@ pub struct ShadowUploadResponse {
 
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct ShdwDriveBatchServerResponse {
-    pub _finalized_locations: Vec<String>,
+    pub _finalized_locations: Option<Vec<String>>,
     pub transaction_signature: String,
 }
 

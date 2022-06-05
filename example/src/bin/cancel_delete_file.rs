@@ -26,7 +26,7 @@ async fn main() {
 
     //cancel delete file
     let cancel_delete_file_response = shdw_drive_client
-        .cancel_delete_file(storage_account_key, url)
+        .cancel_delete_file(&storage_account_key, url)
         .await
         .expect("failed to cancel file deletion");
 
