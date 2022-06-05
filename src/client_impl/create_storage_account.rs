@@ -28,11 +28,11 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn create_storage_account<'a, 'b>(
-        &'a self,
-        name: &'b str,
+    pub async fn create_storage_account(
+        &self,
+        name: &str,
         size: Byte,
-    ) -> ShadowDriveResult<CreateStorageAccountResponse<'_>> {
+    ) -> ShadowDriveResult<CreateStorageAccountResponse> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
 
@@ -123,7 +123,7 @@ where
             });
         }
 
-        let response = response.json::<CreateStorageAccountResponse<'_>>().await?;
+        let response = response.json::<CreateStorageAccountResponse>().await?;
 
         Ok(response)
     }

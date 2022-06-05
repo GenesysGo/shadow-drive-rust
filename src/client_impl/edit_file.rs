@@ -24,12 +24,12 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn edit_file<'a>(
-        &'a self,
+    pub async fn edit_file(
+        &self,
         storage_account_key: Pubkey,
         url: &str,
         mut data: ShdwFile,
-    ) -> ShadowDriveResult<ShadowUploadResponse<'_>> {
+    ) -> ShadowDriveResult<ShadowUploadResponse> {
         let file_meta = data.file.metadata().await.map_err(Error::FileSystemError)?;
         let file_size = file_meta.len();
 
@@ -127,7 +127,7 @@ where
             });
         }
 
-        let response = response.json::<ShadowUploadResponse<'_>>().await?;
+        let response = response.json::<ShadowUploadResponse>().await?;
 
         Ok(response)
     }

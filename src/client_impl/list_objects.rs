@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use serde_json::{json, Value};
 use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
@@ -15,10 +13,10 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn list_objects<'a>(
-        &'a self,
-        storage_account_key: Pubkey,
-    ) -> ShadowDriveResult<Vec<Cow<'_, str>>> {
+    pub async fn list_objects(
+        &self,
+        storage_account_key: &Pubkey,
+    ) -> ShadowDriveResult<Vec<String>> {
         let response = self
             .http_client
             .post(format!("{}/list-objects", SHDW_DRIVE_ENDPOINT))

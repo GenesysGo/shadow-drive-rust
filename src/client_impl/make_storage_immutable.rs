@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
@@ -24,10 +22,10 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn make_storage_immutable<'a>(
-        &'a self,
+    pub async fn make_storage_immutable(
+        &self,
         storage_account_key: Pubkey,
-    ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
+    ) -> ShadowDriveResult<ShdwDriveResponse> {
         let wallet_pubkey = self.wallet.pubkey();
 
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
@@ -73,7 +71,7 @@ where
             )?;
 
         Ok(ShdwDriveResponse {
-            txid: Cow::from(txn_result.to_string()),
+            txid: txn_result.to_string(),
         })
     }
 }

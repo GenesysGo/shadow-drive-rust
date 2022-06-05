@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use std::borrow::Cow;
 use tokio::fs;
 
 use crate::error::Error;
@@ -7,14 +6,14 @@ use crate::error::Error;
 pub type ShadowDriveResult<T> = Result<T, Error>;
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct ShdwDriveResponse<'a> {
-    pub txid: Cow<'a, str>,
+pub struct ShdwDriveResponse {
+    pub txid: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct CreateStorageAccountResponse<'a> {
-    pub shdw_bucket: Option<Cow<'a, str>>,
-    pub transaction_signature: Cow<'a, str>,
+pub struct CreateStorageAccountResponse {
+    pub shdw_bucket: Option<String>,
+    pub transaction_signature: String,
 }
 
 /// A ShdwFile is the pairing of a filename w/ bytes to be uploaded
@@ -25,9 +24,9 @@ pub struct ShdwFile {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct ShadowUploadResponse<'a> {
-    pub finalized_location: Cow<'a, str>,
-    pub transaction_signature: Cow<'a, str>,
+pub struct ShadowUploadResponse {
+    pub finalized_location: String,
+    pub transaction_signature: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -44,6 +43,6 @@ pub struct FileData {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct ListObjectsResponse<'a> {
-    pub keys: Vec<Cow<'a, str>>,
+pub struct ListObjectsResponse {
+    pub keys: Vec<String>,
 }

@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use byte_unit::Byte;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
@@ -32,7 +30,7 @@ where
         &'a self,
         storage_account_key: Pubkey,
         size: Byte,
-    ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
+    ) -> ShadowDriveResult<ShdwDriveResponse> {
         let size_as_bytes: u64 = size
             .get_bytes()
             .try_into()
@@ -102,7 +100,7 @@ where
             )?;
 
         Ok(ShdwDriveResponse {
-            txid: Cow::from(txn_result.to_string()),
+            txid: txn_result.to_string(),
         })
     }
 }

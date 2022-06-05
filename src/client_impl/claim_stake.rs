@@ -6,7 +6,6 @@ use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 use spl_associated_token_account::get_associated_token_address;
-use std::borrow::Cow;
 
 use super::Client;
 use crate::{
@@ -20,15 +19,14 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn claim_stake<'a>(
-        &'a self,
+    pub async fn claim_stake(
+        &self,
         storage_account_key: Pubkey,
-    ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
+    ) -> ShadowDriveResult<ShdwDriveResponse> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
 
         let selected_account = self.get_storage_account(storage_account_key).await?;
-        let stake_account = stake_account(&storage_account_key).0;
         let unstake_account = unstake_account(&storage_account_key).0;
         let unstake_info_account = unstake_info(&storage_account_key).0;
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
@@ -70,7 +68,7 @@ where
             )?;
 
         Ok(ShdwDriveResponse {
-            txid: Cow::from(txn_result.to_string()),
+            txid: txn_result.to_string(),
         })
     }
 }

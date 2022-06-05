@@ -5,7 +5,6 @@ use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
-use std::borrow::Cow;
 use std::str::FromStr;
 
 use super::Client;
@@ -18,11 +17,11 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    pub async fn delete_file<'a>(
-        &'a self,
+    pub async fn delete_file(
+        &self,
         storage_account_key: Pubkey,
         url: String,
-    ) -> ShadowDriveResult<ShdwDriveResponse<'_>> {
+    ) -> ShadowDriveResult<ShdwDriveResponse> {
         let wallet = &self.wallet;
         let wallet_pubkey = wallet.pubkey();
 
@@ -66,7 +65,7 @@ where
             )?;
 
         Ok(ShdwDriveResponse {
-            txid: Cow::from(txn_result.to_string()),
+            txid: txn_result.to_string(),
         })
     }
 }
