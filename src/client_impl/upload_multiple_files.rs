@@ -162,67 +162,67 @@ where
     }
 
     async fn valide_file(&self, mut shdw_file: ShdwFile, storage_account_key: &Pubkey) -> Result<UploadingData, Vec<FileError>> {
-                let mut errors = Vec::new();
-                let file_meta: Metadata;
-                match shdw_file.file.metadata().await {
-                    Ok(meta) => file_meta = meta,
-                    Err(err) => {
-                        errors.push(FileError {
-                            file: shdw_file.name.clone(),
-                            error: format!("error opening file metadata: {:?}", err),
-                        });
-                        return Err(errors);
-                    }
-                }
-                let file_size = file_meta.len();
-                if file_size > 1_073_741_824 {
-                    errors.push(FileError {
-                        file: shdw_file.name.clone(),
-                        error: String::from("Exceed the 1GB limit."),
-                    });
-                }
+      let mut errors = Vec::new();
+      let file_meta: Metadata;
+      match shdw_file.file.metadata().await {
+          Ok(meta) => file_meta = meta,
+          Err(err) => {
+              errors.push(FileError {
+                  file: shdw_file.name.clone(),
+                  error: format!("error opening file metadata: {:?}", err),
+              });
+              return Err(errors);
+          }
+      }
+      let file_size = file_meta.len();
+      if file_size > 1_073_741_824 {
+          errors.push(FileError {
+              file: shdw_file.name.clone(),
+              error: String::from("Exceed the 1GB limit."),
+          });
+      }
 
-                //this may need to be url encoded
-                //should ShdwFile.name not be an option?
-                let url = format!(
-                    "https://shdw-drive.genesysgo.net/{}/{}",
-                    storage_account_key.to_string(),
-                    &shdw_file.name.clone().unwrap_or_default()
-                );
+      //this may need to be url encoded
+      //should ShdwFile.name not be an option?
+      let url = format!(
+          "https://shdw-drive.genesysgo.net/{}/{}",
+          storage_account_key.to_string(),
+          &shdw_file.name.clone().unwrap_or_default()
+      );
 
-                //store any info about file bytes before moving into form
-                let sha256_hash = match sha256::compute(&mut shdw_file.file).await {
-                    Ok(hash) => hash,
-                    Err(err) => {
-                        errors.push(FileError {
-                            file: shdw_file.name.clone(),
-                            error: format!("error hashing file: {:?}", err),
-                        });
-                        return Err(errors);
-                    }
-                };
+      //store any info about file bytes before moving into form
+      let sha256_hash = match sha256::compute(&mut shdw_file.file).await {
+          Ok(hash) => hash,
+          Err(err) => {
+              errors.push(FileError {
+                  file: shdw_file.name.clone(),
+                  error: format!("error hashing file: {:?}", err),
+              });
+              return Err(errors);
+          }
+      };
 
-                //construct file part and create form
-                if let Some(name) = shdw_file.name.as_ref() {
-                    if name.as_bytes().len() > 32 {
-                        errors.push(FileError {
-                            file: Some(name.to_string()),
-                            error: String::from("Exceed the 1GB limit."),
-                        });
-                    }
-                }
+      //construct file part and create form
+      if let Some(name) = shdw_file.name.as_ref() {
+          if name.as_bytes().len() > 32 {
+              errors.push(FileError {
+                  file: Some(name.to_string()),
+                  error: String::from("Exceed the 1GB limit."),
+              });
+          }
+      }
 
-                if errors.len() > 0 {
-                    return Err(errors);
-                }
+      if errors.len() > 0 {
+          return Err(errors);
+      }
 
-                Ok(UploadingData {
-                    name: shdw_file.name.unwrap_or_default(),
-                    size: file_size,
-                    sha256_hash,
-                    url,
-                    file: shdw_file.file,
-                })
+      Ok(UploadingData {
+          name: shdw_file.name.unwrap_or_default(),
+          size: file_size,
+          sha256_hash,
+          url,
+          file: shdw_file.file,
+      })
     }
 
     async fn confirm_storage_account_seed(&self, expected_seed: u32, storage_account_key: &Pubkey) -> ShadowDriveResult<u32>{
@@ -258,8 +258,6 @@ where
     }
 
     async fn send_chunk(&self, storage_account_key: &Pubkey, user_info: Pubkey, new_file_seed: &mut u32, chunk: &[UploadingData]) -> ShadowDriveResult<Vec<ShadowBatchUploadResponse>> {
-
-
           let mut files_with_pubkeys: Vec<(Pubkey, &UploadingData)> = Vec::with_capacity(chunk.len());
           for file in chunk {
             files_with_pubkeys.push((derived_addresses::file_account(&storage_account_key, *new_file_seed).0, file));
@@ -297,7 +295,7 @@ where
 
 
             let mut form = Form::new();
-            for (_, file) in files_with_pubkeys.iter_mut() {
+            for (_, file) in files_with_pubkeys {
               //seek to front of file
               let mut file_data = file.file.try_clone().await.map_err(Error::FileSystemError)?;
               file_data.seek(SeekFrom::Start(0)).await.map_err(Error::FileSystemError)? ;
