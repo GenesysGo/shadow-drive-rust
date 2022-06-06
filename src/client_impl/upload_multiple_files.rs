@@ -90,7 +90,9 @@ where
             })
             .collect::<Vec<_>>();
 
-        tracing::debug!(existing_uploads = ?upload_results, "found existing files, will not attempt re-upload for existing files");
+        if upload_results.len() > 0 {
+            tracing::debug!(existing_uploads = ?upload_results, "found existing files, will not attempt re-upload for existing files");
+        }
 
         let mut chunks = Vec::default();
         let mut current_chunk: Vec<UploadingData> = Vec::default();
@@ -117,6 +119,7 @@ where
                 //create new chunk and clear name buffer
                 chunks.push(current_chunk);
                 current_chunk = Vec::default();
+                current_chunk.push(file_data);
                 name_buffer = 0;
             }
         }
@@ -125,11 +128,11 @@ where
             chunks.push(current_chunk);
         }
 
-        //confirm file seed before sending
         let mut new_file_seed = selected_account.init_counter;
 
         //send each chunk to shdw drive
         for chunk in chunks {
+            //confirm file seed before sending
             new_file_seed = self
                 .confirm_storage_account_seed(new_file_seed, storage_account_key)
                 .await?;
