@@ -2,11 +2,8 @@ use serde_json::json;
 use shadow_drive_rust::Client;
 use solana_account_decoder::{UiAccount, UiAccountEncoding};
 use solana_client::rpc_response::RpcKeyedAccount;
-use solana_client::{
-    rpc_client::RpcClient,
-    rpc_request::RpcRequest,
-    rpc_response::{Response, RpcResponseContext},
-};
+use solana_client::{rpc_client::RpcClient, rpc_request::RpcRequest};
+use solana_sdk::signature::Signer;
 use solana_sdk::{pubkey::Pubkey, signer::keypair::Keypair};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -16,25 +13,13 @@ extern crate test_utilities;
 #[tokio::test]
 async fn test_get_storage_account() {
     let keypair = Keypair::new();
+    let owner_pubkey = keypair.pubkey();
     let storage_account_key = Pubkey::new_unique();
 
     // Prepare mocks
     let mut mocks = HashMap::new();
-
-    let mock_storage_account = test_utilities::mock_storage_account_1();
-
-    let encoded_mock_account = UiAccount::encode(
-        &storage_account_key,
-        &mock_storage_account,
-        UiAccountEncoding::JsonParsed,
-        None,
-        None,
-    );
-
-    let get_storage_account_response = json!(Response {
-        context: RpcResponseContext { slot: 1 },
-        value: encoded_mock_account,
-    });
+    let get_storage_account_response =
+        test_utilities::basic_storage_account_response(owner_pubkey, storage_account_key);
     mocks.insert(RpcRequest::GetAccountInfo, get_storage_account_response);
 
     // Create RPC + Client
@@ -55,14 +40,8 @@ async fn test_get_storage_account() {
     assert_eq!(storage_account.delete_request_epoch, 0);
     assert_eq!(storage_account.storage, 1048576);
     assert_eq!(storage_account.storage_available, 1048560);
-    assert_eq!(
-        storage_account.owner_1,
-        Pubkey::from_str("CTJPtEeFGj1Tz5gsSKbfJhQFLnTwFTMqQu5LTG7Tc3vK").unwrap()
-    );
-    assert_eq!(
-        storage_account.owner_2,
-        Pubkey::from_str("CTJPtEeFGj1Tz5gsSKbfJhQFLnTwFTMqQu5LTG7Tc3vK").unwrap()
-    );
+    assert_eq!(storage_account.owner_1, owner_pubkey);
+    assert_eq!(storage_account.owner_2, owner_pubkey);
     assert_eq!(
         storage_account.shdw_payer,
         Pubkey::from_str("EjQqfkVGpoahPqqMHGy8HW3hBgNgKBeLb7tSWJCngApo").unwrap()
@@ -86,8 +65,10 @@ async fn test_get_multiple_storage_accounts() {
     // Prepare mocks
     let mut mocks = HashMap::new();
 
-    let mock_storage_account_1 = test_utilities::mock_storage_account_1();
-    let mock_storage_account_2 = test_utilities::mock_storage_account_2();
+    let mock_storage_account_1 =
+        test_utilities::mock_storage_account(keypair.pubkey(), "first-test".to_string());
+    let mock_storage_account_2 =
+        test_utilities::mock_storage_account(keypair.pubkey(), "second-test".to_string());
 
     let encoded_storage_1 = UiAccount::encode(
         &storage_account_key_1,
@@ -129,8 +110,7 @@ async fn test_get_multiple_storage_accounts() {
 
     assert_eq!(storage_accounts.len(), 2);
     assert_eq!(storage_accounts[0].identifier, "first-test");
-    assert_eq!(storage_accounts[0].account_counter_seed, 19);
-    assert_eq!(storage_accounts[0].identifier, "first-test");
     assert_eq!(storage_accounts[1].identifier, "second-test");
-    assert_eq!(storage_accounts[1].account_counter_seed, 7);
+    assert_eq!(storage_accounts[0].account_counter_seed, 19);
+    assert_eq!(storage_accounts[1].account_counter_seed, 19);
 }
