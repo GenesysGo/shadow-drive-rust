@@ -25,6 +25,8 @@ use crate::{
     models::*,
 };
 
+/// UploadingData is a collection of info required for uploading a file
+/// to Shadow Drive. Fields are generally derived from a given [`ShdwFile`] during the upload process.
 #[derive(Debug)]
 struct UploadingData {
     name: String,
@@ -38,6 +40,16 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
+    /// upload_multiple_files uploads a list of [`ShdwFile`]s to Shadow Drive.
+    /// The multiple upload process is done in 4 steps:
+    /// 1. Validate & prepare all files into [`UploadingData`]. If a file there are validation errors, the process is aborted.
+    /// 2. Filter files that have the same name as a previously uploaded file. Uploads are not attempted for duplicates.
+    /// 3. Divide files to be uploaded into batches of 5 or less to reduce calls but keep transaction size below the limit.
+    /// 4. For each batch:
+    ///   a. confirm file account seed
+    ///   b. derive file account pubkey for each file
+    ///   c. construct & partial sign transaction
+    ///   d. submit transaction and files to Shadow Drive as multipart form data
     pub async fn upload_multiple_files(
         &self,
         storage_account_key: &Pubkey,
@@ -94,44 +106,44 @@ where
             tracing::debug!(existing_uploads = ?upload_results, "found existing files, will not attempt re-upload for existing files");
         }
 
-        let mut chunks = Vec::default();
-        let mut current_chunk: Vec<UploadingData> = Vec::default();
-        let mut name_buffer = 0;
+        let mut batches = Vec::default();
+        let mut current_batch: Vec<UploadingData> = Vec::default();
+        let mut batch_total_name_length = 0;
 
         for file_data in to_upload {
-            if current_chunk.is_empty() {
-                name_buffer += file_data.name.as_bytes().len();
-                current_chunk.push(file_data);
+            if current_batch.is_empty() {
+                batch_total_name_length += file_data.name.as_bytes().len();
+                current_batch.push(file_data);
                 continue;
             }
 
-            //if the current chunk has 5 or less
-            if current_chunk.len() < 5 &&
+            //if the current batch has 5 or less
+            if current_batch.len() < 5 &&
             //our current name buffer is under the limit 
-            name_buffer < 154 &&
+            batch_total_name_length < 154 &&
             //the name buffer will be under size with the new file
-            name_buffer + file_data.name.as_bytes().len() < 154
+            batch_total_name_length + file_data.name.as_bytes().len() < 154
             {
-                //add to current chunk
-                name_buffer += file_data.name.as_bytes().len();
-                current_chunk.push(file_data);
+                //add to current batch
+                batch_total_name_length += file_data.name.as_bytes().len();
+                current_batch.push(file_data);
             } else {
-                //create new chunk and clear name buffer
-                chunks.push(current_chunk);
-                current_chunk = Vec::default();
-                current_chunk.push(file_data);
-                name_buffer = 0;
+                //create new batch and clear name buffer
+                batches.push(current_batch);
+                current_batch = Vec::default();
+                current_batch.push(file_data);
+                batch_total_name_length = 0;
             }
         }
-        //if the final chunk has something, push it to chunks
-        if !current_chunk.is_empty() {
-            chunks.push(current_chunk);
+        //if the final batch has something, push it to batches
+        if !current_batch.is_empty() {
+            batches.push(current_batch);
         }
 
         let mut new_file_seed = selected_account.init_counter;
 
-        //send each chunk to shdw drive
-        for chunk in chunks {
+        //send each batch to shdw drive
+        for batch in batches {
             //confirm file seed before sending
             new_file_seed = self
                 .confirm_storage_account_seed(new_file_seed, storage_account_key)
@@ -140,12 +152,12 @@ where
             let mut num_retries = 0;
             loop {
                 match self
-                    .send_chunk(storage_account_key, user_info, &mut new_file_seed, &chunk)
+                    .send_batch(storage_account_key, user_info, &mut new_file_seed, &batch)
                     .await
                 {
                     Ok(response) => {
                         upload_results.extend(response.into_iter());
-                        //break loop to move to next chunk
+                        //break loop to move to next batch
                         break;
                     }
                     Err(error) => {
@@ -155,7 +167,7 @@ where
                             "error uploading batch to shdw drive"
                         );
                         num_retries += 1;
-                        //after 5 attempts bail on the chunk
+                        //after 5 attempts bail on the batch
                         if num_retries == 5 {
                             //reset file seed
                             new_file_seed = self
@@ -166,21 +178,21 @@ where
                                 .await?;
 
                             //save failed entries
-                            let failed = chunk.into_iter().map(|file| ShadowBatchUploadResponse {
+                            let failed = batch.into_iter().map(|file| ShadowBatchUploadResponse {
                                 file_name: file.name,
                                 status: BatchUploadStatus::Error(format!("{:?}", error)),
                                 location: None,
                                 transaction_signature: None,
                             });
                             upload_results.extend(failed);
-                            //break chunk retry loop to move to next
+                            //break batch retry loop to move to next
                             break;
                         }
                     }
                 }
             }
 
-            //wait 1/2 second before going to next chunk
+            //wait 1/2 second before going to next batch
             //without this the latest blockhash doesn't align with the server's recent blockhash
             tokio::time::sleep(Duration::from_millis(500)).await;
         }
@@ -188,6 +200,11 @@ where
         Ok(upload_results)
     }
 
+    /// prepare_upload takes a [`ShdwFile`] and creates an [`UploadingData`] by:
+    /// 1. retrieve file size & validate that it is below the 1GB limit
+    /// 2. derive the expected upload URL from the `storage_account_key` and the file name,
+    /// 3. calculate sha256 hash of the data in streaming fashion
+    /// 4. validate that the file name is less than 32 bytes
     async fn prepare_upload(
         &self,
         mut shdw_file: ShdwFile,
@@ -214,7 +231,6 @@ where
         }
 
         //this may need to be url encoded
-        //should ShdwFile.name not be an option?
         let url = format!(
             "https://shdw-drive.genesysgo.net/{}/{}",
             storage_account_key.to_string(),
@@ -253,6 +269,9 @@ where
         })
     }
 
+    /// confirm_storage_account_seed performs a retry loop to ensure that the file seed
+    /// use to derive file account pubkeys is valid before creating a batch upload transaction.
+    /// In the event that the chain has a more up to date file seed, the on-chain seed is used for the transaction.
     async fn confirm_storage_account_seed(
         &self,
         expected_seed: u32,
@@ -292,15 +311,18 @@ where
         }
     }
 
-    async fn send_chunk(
+    /// send_batch constructs and partially signs a transaction for a given slice of [`UploadingData`].
+    /// The transcation is then sent via HTTP POST to Shadow Drive servers as multipart form data alongside file contents.
+    async fn send_batch(
         &self,
         storage_account_key: &Pubkey,
         user_info: Pubkey,
         new_file_seed: &mut u32,
-        chunk: &[UploadingData],
+        batch: &[UploadingData],
     ) -> ShadowDriveResult<Vec<ShadowBatchUploadResponse>> {
-        let mut files_with_pubkeys: Vec<(Pubkey, &UploadingData)> = Vec::with_capacity(chunk.len());
-        for file in chunk {
+        //derive file account pubkeys using new_file_seed
+        let mut files_with_pubkeys: Vec<(Pubkey, &UploadingData)> = Vec::with_capacity(batch.len());
+        for file in batch {
             files_with_pubkeys.push((
                 derived_addresses::file_account(&storage_account_key, *new_file_seed).0,
                 file,
@@ -341,18 +363,23 @@ where
         txn.try_partial_sign(&[&self.wallet], self.rpc_client.get_latest_blockhash()?)?;
         let txn_encoded = serialize_and_encode(&txn, UiTransactionEncoding::Base64)?;
 
+        //construct HTTP form data
         let mut form = Form::new();
         for (_, file) in files_with_pubkeys {
-            //seek to front of file
+            //because file is borrowed, we have to obtain a new instance.
+            // `try_clone` uses the underlying file handle as the original
             let mut file_data = file
                 .file
                 .try_clone()
                 .await
                 .map_err(Error::FileSystemError)?;
+
+            //seek to front of file
             file_data
                 .seek(SeekFrom::Start(0))
                 .await
                 .map_err(Error::FileSystemError)?;
+
             form = form.part(
                 "file",
                 Part::stream_with_length(file_data, file.size).file_name(file.name.clone()),
@@ -361,12 +388,14 @@ where
 
         let form = form.part("transaction", Part::text(txn_encoded));
 
+        //submit files to Shadow Drive
         let response = self
             .http_client
             .post(format!("{}/upload-batch", SHDW_DRIVE_ENDPOINT))
             .multipart(form)
             .send()
             .await?;
+
         if !response.status().is_success() {
             return Err(Error::ShadowDriveServerError {
                 status: response.status().as_u16(),
@@ -374,9 +403,9 @@ where
             });
         }
 
+        //deserialize the response from ShadowDrive and return the upload details
         let response = response.json::<ShdwDriveBatchServerResponse>().await?;
-
-        let response = chunk
+        let response = batch
             .iter()
             .map(|file| ShadowBatchUploadResponse {
                 file_name: file.name.clone(),
