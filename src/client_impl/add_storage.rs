@@ -58,6 +58,7 @@ where
                 return Err(Error::from(err));
             }
         }
+        println!("got user info");
 
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
