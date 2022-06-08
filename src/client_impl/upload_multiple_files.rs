@@ -1,5 +1,4 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
-use cryptohelpers::sha256;
 use futures::future::join_all;
 use reqwest::multipart::{Form, Part};
 use serde_json::Value;
@@ -11,11 +10,7 @@ use solana_sdk::{
 };
 use solana_transaction_status::UiTransactionEncoding;
 use std::collections::HashSet;
-use std::fs::Metadata;
-use std::io::SeekFrom;
 use std::time::Duration;
-use tokio::fs::File;
-use tokio::io::AsyncSeekExt;
 
 use super::Client;
 use crate::{
@@ -24,17 +19,6 @@ use crate::{
     error::{Error, FileError},
     models::*,
 };
-
-/// UploadingData is a collection of info required for uploading a file
-/// to Shadow Drive. Fields are generally derived from a given [`ShdwFile`] during the upload process.
-#[derive(Debug)]
-struct UploadingData {
-    name: String,
-    size: u64,
-    sha256_hash: sha256::Sha256Hash,
-    url: String,
-    file: File,
-}
 
 impl<T> Client<T>
 where
@@ -53,19 +37,17 @@ where
     pub async fn upload_multiple_files(
         &self,
         storage_account_key: &Pubkey,
-        data: Vec<ShdwFile>,
+        data: Vec<ShadowFile>,
     ) -> ShadowDriveResult<Vec<ShadowBatchUploadResponse>> {
         let wallet_pubkey = self.wallet.pubkey();
         let (user_info, _) = derived_addresses::user_info(&wallet_pubkey);
         let selected_account = self.get_storage_account(storage_account_key).await?;
 
         //collect upload data for each file
-        let upload_data_futures =
-            data.into_iter()
-                .map(|shdw_file| async move {
-                    self.prepare_upload(shdw_file, storage_account_key).await
-                })
-                .collect::<Vec<_>>();
+        let upload_data_futures = data
+            .into_iter()
+            .map(|shdw_file| async move { shdw_file.prepare_upload(storage_account_key).await })
+            .collect::<Vec<_>>();
 
         let file_data = join_all(upload_data_futures).await;
 
@@ -89,15 +71,15 @@ where
             .collect();
         let (to_upload, existing_uploads): (Vec<_>, Vec<_>) = succeeded_files
             .into_iter()
-            .partition(|file| !all_objects.contains(&file.name));
+            .partition(|upload_data| !all_objects.contains(upload_data.file.name()));
 
         //pre-fill results w/ existing files
         let mut upload_results = existing_uploads
             .into_iter()
-            .map(|file| ShadowBatchUploadResponse {
-                file_name: file.name,
+            .map(|upload_data| ShadowBatchUploadResponse {
+                file_name: String::from(upload_data.file.name()),
                 status: BatchUploadStatus::AlreadyExists,
-                location: Some(file.url),
+                location: Some(upload_data.url),
                 transaction_signature: None,
             })
             .collect::<Vec<_>>();
@@ -110,10 +92,10 @@ where
         let mut current_batch: Vec<UploadingData> = Vec::default();
         let mut batch_total_name_length = 0;
 
-        for file_data in to_upload {
+        for upload_data in to_upload {
             if current_batch.is_empty() {
-                batch_total_name_length += file_data.name.as_bytes().len();
-                current_batch.push(file_data);
+                batch_total_name_length += upload_data.file.name().as_bytes().len();
+                current_batch.push(upload_data);
                 continue;
             }
 
@@ -122,16 +104,16 @@ where
             //our current name buffer is under the limit 
             batch_total_name_length < 154 &&
             //the name buffer will be under size with the new file
-            batch_total_name_length + file_data.name.as_bytes().len() < 154
+            batch_total_name_length + upload_data.file.name().as_bytes().len() < 154
             {
                 //add to current batch
-                batch_total_name_length += file_data.name.as_bytes().len();
-                current_batch.push(file_data);
+                batch_total_name_length += upload_data.file.name().as_bytes().len();
+                current_batch.push(upload_data);
             } else {
                 //create new batch and clear name buffer
                 batches.push(current_batch);
                 current_batch = Vec::default();
-                current_batch.push(file_data);
+                current_batch.push(upload_data);
                 batch_total_name_length = 0;
             }
         }
@@ -178,12 +160,15 @@ where
                                 .await?;
 
                             //save failed entries
-                            let failed = batch.into_iter().map(|file| ShadowBatchUploadResponse {
-                                file_name: file.name,
-                                status: BatchUploadStatus::Error(format!("{:?}", error)),
-                                location: None,
-                                transaction_signature: None,
-                            });
+                            let failed =
+                                batch
+                                    .into_iter()
+                                    .map(|upload_data| ShadowBatchUploadResponse {
+                                        file_name: String::from(upload_data.file.name()),
+                                        status: BatchUploadStatus::Error(format!("{:?}", error)),
+                                        location: None,
+                                        transaction_signature: None,
+                                    });
                             upload_results.extend(failed);
                             //break batch retry loop to move to next
                             break;
@@ -198,75 +183,6 @@ where
         }
 
         Ok(upload_results)
-    }
-
-    /// prepare_upload takes a [`ShdwFile`] and creates an [`UploadingData`] by:
-    /// 1. retrieve file size & validate that it is below the 1GB limit
-    /// 2. derive the expected upload URL from the `storage_account_key` and the file name,
-    /// 3. calculate sha256 hash of the data in streaming fashion
-    /// 4. validate that the file name is less than 32 bytes
-    async fn prepare_upload(
-        &self,
-        mut shdw_file: ShdwFile,
-        storage_account_key: &Pubkey,
-    ) -> Result<UploadingData, Vec<FileError>> {
-        let mut errors = Vec::new();
-        let file_meta: Metadata;
-        match shdw_file.file.metadata().await {
-            Ok(meta) => file_meta = meta,
-            Err(err) => {
-                errors.push(FileError {
-                    file: shdw_file.name.clone(),
-                    error: format!("error opening file metadata: {:?}", err),
-                });
-                return Err(errors);
-            }
-        }
-        let file_size = file_meta.len();
-        if file_size > 1_073_741_824 {
-            errors.push(FileError {
-                file: shdw_file.name.clone(),
-                error: String::from("Exceed the 1GB limit."),
-            });
-        }
-
-        //this may need to be url encoded
-        let url = format!(
-            "https://shdw-drive.genesysgo.net/{}/{}",
-            storage_account_key.to_string(),
-            &shdw_file.name
-        );
-
-        //store any info about file bytes before moving into form
-        let sha256_hash = match sha256::compute(&mut shdw_file.file).await {
-            Ok(hash) => hash,
-            Err(err) => {
-                errors.push(FileError {
-                    file: shdw_file.name.clone(),
-                    error: format!("error hashing file: {:?}", err),
-                });
-                return Err(errors);
-            }
-        };
-
-        if shdw_file.name.as_bytes().len() > 32 {
-            errors.push(FileError {
-                file: shdw_file.name.clone(),
-                error: String::from("Exceed the 1GB limit."),
-            });
-        }
-
-        if errors.len() > 0 {
-            return Err(errors);
-        }
-
-        Ok(UploadingData {
-            name: shdw_file.name,
-            size: file_size,
-            sha256_hash,
-            url,
-            file: shdw_file.file,
-        })
     }
 
     /// confirm_storage_account_seed performs a retry loop to ensure that the file seed
@@ -345,7 +261,7 @@ where
                     file: *file_account,
                 };
                 let args = shdw_drive_instructions::StoreFile {
-                    filename: file.name.clone(),
+                    filename: file.file.name().to_string(),
                     sha256_hash: hex::encode(file.sha256_hash.into_bytes()),
                     size: file.size,
                 };
@@ -366,24 +282,7 @@ where
         //construct HTTP form data
         let mut form = Form::new();
         for (_, file) in files_with_pubkeys {
-            //because file is borrowed, we have to obtain a new instance.
-            // `try_clone` uses the underlying file handle as the original
-            let mut file_data = file
-                .file
-                .try_clone()
-                .await
-                .map_err(Error::FileSystemError)?;
-
-            //seek to front of file
-            file_data
-                .seek(SeekFrom::Start(0))
-                .await
-                .map_err(Error::FileSystemError)?;
-
-            form = form.part(
-                "file",
-                Part::stream_with_length(file_data, file.size).file_name(file.name.clone()),
-            );
+            form = form.part("file", file.file.to_form_part(file.size).await?);
         }
 
         let form = form.part("transaction", Part::text(txn_encoded));
@@ -408,7 +307,7 @@ where
         let response = batch
             .iter()
             .map(|file| ShadowBatchUploadResponse {
-                file_name: file.name.clone(),
+                file_name: file.file.name().to_string(),
                 status: BatchUploadStatus::Uploaded,
                 location: Some(file.url.clone()),
                 transaction_signature: Some(response.transaction_signature.clone()),

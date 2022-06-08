@@ -1,6 +1,9 @@
 use byte_unit::{Byte, ByteUnit};
 use futures::{future::join_all, TryStreamExt};
-use shadow_drive_rust::{models::ShdwFile, Client};
+use shadow_drive_rust::{
+    models::{ShadowFile, ShdwFile},
+    Client,
+};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     pubkey::Pubkey,
@@ -23,7 +26,7 @@ async fn main() {
     let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     let pubkey = keypair.pubkey();
     let (storage_account_key, _) =
-        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 4);
+        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 5);
 
     //create shdw drive client
     let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
@@ -48,20 +51,25 @@ async fn main() {
         .await
         .expect("failed to read multiple uploads dir");
 
-    let files = tokio_stream::wrappers::ReadDirStream::new(dir)
+    let mut files = tokio_stream::wrappers::ReadDirStream::new(dir)
         .filter(Result::is_ok)
         .and_then(|entry| async move {
-            Ok(ShdwFile {
-                name: entry
+            Ok(ShadowFile::file(
+                entry
                     .file_name()
                     .into_string()
                     .expect("failed to convert os string to regular string"),
-                file: File::open(entry.path()).await.expect("failed to open file"),
-            })
+                entry.path(),
+            ))
         })
         .collect::<Result<Vec<_>, _>>()
         .await
         .expect("failed to create shdw files for dir");
+
+    files.push(ShadowFile::bytes(
+        String::from("buf.txt"),
+        &b"this is a buf test"[..],
+    ));
 
     let upload_results = shdw_drive_client
         .upload_multiple_files(&storage_account_key, files)
