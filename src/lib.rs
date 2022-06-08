@@ -1,3 +1,4 @@
+// #![deny(missing_docs)]
 use async_trait::async_trait;
 use byte_unit::Byte;
 use models::{CreateStorageAccountResponse, ShadowDriveResult, ShdwDriveResponse};

@@ -17,6 +17,32 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
+    /// Marks a file for deletion in the Shadow Drive.
+    /// Files marked for deletion are deleted at the end of each Solana epoch.
+    /// Marking a file for deletion can be undone with `cancel_delete_file`,
+    /// but this must be done before the end of the Solana epoch.
+    /// # Example
+    ///
+    /// ```
+    /// # use shadow_drive_rust::{Client, derived_addresses::storage_account};
+    /// # use solana_client::rpc_client::RpcClient;
+    /// # use solana_sdk::{
+    /// # pubkey::Pubkey,
+    /// # signature::Keypair,
+    /// # signer::{keypair::read_keypair_file, Signer},
+    /// # };
+    /// #
+    /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
+    /// # let user_pubkey = keypair.pubkey();
+    /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
+    /// # let shdw_drive_client = Client::new(keypair, rpc_client);
+    /// # let (storage_account_key, _) = storage_account(&user_pubkey, 0);
+    /// # let url = String::from("https://shdw-drive.genesysgo.net/B7Qk2omAvchkePhdGovCVQuVpZHcieqPQCwFxeeBZGuT/file.txt");
+    /// #
+    /// let delete_file_response = shdw_drive_client
+    ///     .delete_file(&storage_account_key, url)
+    ///     .await?;
+    /// ```
     pub async fn delete_file(
         &self,
         storage_account_key: &Pubkey,
