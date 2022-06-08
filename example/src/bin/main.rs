@@ -30,12 +30,12 @@ async fn main() {
     );
     let shdw_drive_client = Client::new(keypair, solana_rpc);
 
-    list_objects_test(shdw_drive_client, storage_account_key).await;
+    list_objects_test(shdw_drive_client, &storage_account_key).await;
 }
 
 async fn list_objects_test<T: Signer + Send + Sync>(
     shdw_drive_client: Client<T>,
-    storage_account_key: Pubkey,
+    storage_account_key: &Pubkey,
 ) {
     let objects = shdw_drive_client
         .list_objects(storage_account_key)
@@ -47,7 +47,7 @@ async fn list_objects_test<T: Signer + Send + Sync>(
 
 async fn make_storage_immutable_test<T: Signer + Send + Sync>(
     shdw_drive_client: Client<T>,
-    storage_account_key: Pubkey,
+    storage_account_key: &Pubkey,
 ) {
     let storage_account = shdw_drive_client
         .get_storage_account(storage_account_key)
@@ -59,14 +59,14 @@ async fn make_storage_immutable_test<T: Signer + Send + Sync>(
     );
 
     let make_immutable_response = shdw_drive_client
-        .make_storage_immutable(storage_account_key)
+        .make_storage_immutable(&storage_account_key)
         .await
         .expect("failed to make storage immutable");
 
     println!("txn id: {:?}", make_immutable_response.txid);
 
     let storage_account = shdw_drive_client
-        .get_storage_account(storage_account_key)
+        .get_storage_account(&storage_account_key)
         .await
         .expect("failed to get storage account");
     println!(
@@ -77,10 +77,10 @@ async fn make_storage_immutable_test<T: Signer + Send + Sync>(
 
 async fn add_storage_test<T: Signer + Send + Sync>(
     shdw_drive_client: Client<T>,
-    storage_account_key: Pubkey,
+    storage_account_key: &Pubkey,
 ) {
     let storage_account = shdw_drive_client
-        .get_storage_account(storage_account_key)
+        .get_storage_account(&storage_account_key)
         .await
         .expect("failed to get storage account");
 
@@ -95,7 +95,7 @@ async fn add_storage_test<T: Signer + Send + Sync>(
     println!("txn id: {:?}", add_storage_response.txid);
 
     let storage_account = shdw_drive_client
-        .get_storage_account(storage_account_key)
+        .get_storage_account(&storage_account_key)
         .await
         .expect("failed to get storage account");
 
@@ -104,7 +104,7 @@ async fn add_storage_test<T: Signer + Send + Sync>(
 
 async fn reduce_storage_test<T: Signer + Send + Sync>(
     shdw_drive_client: Client<T>,
-    storage_account_key: Pubkey,
+    storage_account_key: &Pubkey,
 ) {
     let storage_account = shdw_drive_client
         .get_storage_account(storage_account_key)
@@ -133,7 +133,7 @@ async fn reduce_storage_test<T: Signer + Send + Sync>(
 
 async fn upload_file_test<T: Signer + Send + Sync>(
     shdw_drive_client: Client<T>,
-    storage_account_key: Pubkey,
+    storage_account_key: &Pubkey,
 ) {
     let file = tokio::fs::File::open("example.png")
         .await
@@ -143,7 +143,7 @@ async fn upload_file_test<T: Signer + Send + Sync>(
         .upload_file(
             storage_account_key,
             ShdwFile {
-                name: Some(String::from("example.png")),
+                name: String::from("example.png"),
                 file,
             },
         )

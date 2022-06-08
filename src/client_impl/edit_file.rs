@@ -67,15 +67,13 @@ where
 
         //construct file part and create form
         let mut file_part = Part::stream(data.file);
-        if let Some(name) = data.name.as_ref() {
-            if name.as_bytes().len() > 32 {
-                errors.push(FileError {
-                    file: Some(name.to_string()),
-                    error: String::from("Exceed the 1GB limit."),
-                });
-            } else {
-                file_part = file_part.file_name(name.to_string());
-            }
+        if data.name.as_bytes().len() > 32 {
+            errors.push(FileError {
+                file: data.name.clone(),
+                error: String::from("File name too long. Reduce to 32 bytes long."),
+            });
+        } else {
+            file_part = file_part.file_name(data.name.clone());
         }
 
         if errors.len() > 0 {

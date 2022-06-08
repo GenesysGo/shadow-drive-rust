@@ -28,7 +28,7 @@ pub enum Error {
 
 #[derive(Debug)]
 pub struct FileError {
-    pub file: Option<String>,
+    pub file: String,
     pub error: String,
 }
 
