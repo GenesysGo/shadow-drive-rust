@@ -17,7 +17,7 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Marks a file for deletion in the Shadow Drive.
+    /// Marks a file for deletion from the Shadow Drive.
     /// Files marked for deletion are deleted at the end of each Solana epoch.
     /// Marking a file for deletion can be undone with `cancel_delete_file`,
     /// but this must be done before the end of the Solana epoch.

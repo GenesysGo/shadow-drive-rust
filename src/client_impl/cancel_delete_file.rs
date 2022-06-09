@@ -19,6 +19,30 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
+    /// Unmarks a file for deletion from the Shadow Drive.
+    /// To prevent deletion, this method must be called before the end of the Solana epoch in which `delete_file` is called.
+    /// # Example
+    ///
+    /// ```
+    /// # use shadow_drive_rust::{Client, derived_addresses::storage_account};
+    /// # use solana_client::rpc_client::RpcClient;
+    /// # use solana_sdk::{
+    /// # pubkey::Pubkey,
+    /// # signature::Keypair,
+    /// # signer::{keypair::read_keypair_file, Signer},
+    /// # };
+    /// #
+    /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
+    /// # let user_pubkey = keypair.pubkey();
+    /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
+    /// # let shdw_drive_client = Client::new(keypair, rpc_client);
+    /// # let (storage_account_key, _) = storage_account(&user_pubkey, 0);
+    /// # let url = String::from("https://shdw-drive.genesysgo.net/B7Qk2omAvchkePhdGovCVQuVpZHcieqPQCwFxeeBZGuT/file.txt");
+    /// #
+    /// let cancel_delete_file_response = shdw_drive_client
+    ///     .cancel_delete_file(&storage_account_key, url)
+    ///     .await?;
+    /// ```
     pub async fn cancel_delete_file(
         &self,
         storage_account_key: &Pubkey,
