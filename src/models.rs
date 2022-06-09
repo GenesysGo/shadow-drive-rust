@@ -47,6 +47,7 @@ impl UploadingData {
     }
 }
 
+/// [`ShadowFile`] is the combination of a file name and a [`Payload`].
 #[derive(Debug)]
 pub struct ShadowFile {
     pub name: String,

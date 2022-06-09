@@ -12,7 +12,8 @@ use tokio::fs::File;
 use super::{ShadowFile, UploadingData};
 
 /// [`PayloadType`] is an enum containing the types that the
-/// SDK can upload to ShadowDrive.
+/// SDK can upload to ShadowDrive. Each variant is expected to implement [`PayloadExt`] so the SDK
+/// can derive required upload metadata.
 #[derive(Debug)]
 pub enum Payload {
     File(PathBuf),
@@ -32,8 +33,14 @@ impl Payload {
     }
 }
 
+/// [`PayloadExt`] is used to implement new data sources that can be used in the [`Payload`] enum.
 #[async_trait]
 pub trait PayloadExt {
+    /// prepare_upload receives a storage account [`Pubkey`] and a file name. These details are used
+    /// in combination with the underlying type to derive:
+    /// * data size in bytes
+    /// * sha256 of the data
+    /// * the url that the file will be accessible at upon successsful upload
     async fn prepare_upload(
         self,
         storage_account_key: &Pubkey,
