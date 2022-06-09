@@ -85,7 +85,7 @@ impl ShadowFile {
                 Ok(Part::stream_with_length(file, size).file_name(name.clone()))
             }
             Self::Buf { name, data } => {
-                Ok(Part::stream_with_length(data.clone(), size).file_name(name.clone()))
+                Ok(Part::stream_with_length(Bytes::clone(&data), size).file_name(name.clone()))
             }
         }
     }
