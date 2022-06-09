@@ -1,18 +1,9 @@
-use byte_unit::{Byte, ByteUnit};
-use futures::{future::join_all, TryStreamExt};
-use shadow_drive_rust::{
-    models::{ShadowFile, ShdwFile},
-    Client,
-};
+use byte_unit::Byte;
+use futures::TryStreamExt;
+use shadow_drive_rust::{models::ShadowFile, Client};
 use solana_client::rpc_client::RpcClient;
-use solana_sdk::{
-    pubkey::Pubkey,
-    signer::{keypair::read_keypair_file, Signer},
-};
-use std::str::FromStr;
-use tokio::fs::File;
+use solana_sdk::signer::{keypair::read_keypair_file, Signer};
 use tokio_stream::StreamExt;
-use tracing::Level;
 
 const KEYPAIR_PATH: &str = "keypair.json";
 
@@ -26,7 +17,7 @@ async fn main() {
     let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     let pubkey = keypair.pubkey();
     let (storage_account_key, _) =
-        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 5);
+        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 8);
 
     //create shdw drive client
     let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");

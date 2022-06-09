@@ -36,10 +36,7 @@ where
 
         let selected_account = self.get_storage_account(storage_account_key).await?;
 
-        let form = Form::new().part(
-            "file",
-            upload_data.file.to_form_part(upload_data.size).await?,
-        );
+        let form = Form::new().part("file", upload_data.to_form_part().await?);
 
         //construct & partial sign txn
         let file_seed = selected_account.init_counter;
@@ -56,7 +53,7 @@ where
             system_program: system_program::ID,
         };
         let args = shdw_drive_instructions::StoreFile {
-            filename: String::from(upload_data.file.name()),
+            filename: String::from(upload_data.file.name),
             sha256_hash: hex::encode(upload_data.sha256_hash.into_bytes()),
             size: upload_data.size,
         };

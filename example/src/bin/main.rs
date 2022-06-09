@@ -1,18 +1,10 @@
-use std::{io::SeekFrom, str::FromStr};
-
 use byte_unit::Byte;
-use shadow_drive_rust::{
-    models::{ShadowFile, ShdwFile},
-    Client,
-};
+use shadow_drive_rust::{models::ShadowFile, Client};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
-    commitment_config::{CommitmentConfig, CommitmentLevel},
     pubkey::Pubkey,
-    signature::Keypair,
     signer::{keypair::read_keypair_file, Signer},
 };
-use tokio::io::AsyncSeekExt;
 
 const KEYPAIR_PATH: &str = "keypair.json";
 

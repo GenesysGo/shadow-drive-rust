@@ -71,13 +71,13 @@ where
             .collect();
         let (to_upload, existing_uploads): (Vec<_>, Vec<_>) = succeeded_files
             .into_iter()
-            .partition(|upload_data| !all_objects.contains(upload_data.file.name()));
+            .partition(|upload_data| !all_objects.contains(&upload_data.file.name));
 
         //pre-fill results w/ existing files
         let mut upload_results = existing_uploads
             .into_iter()
             .map(|upload_data| ShadowBatchUploadResponse {
-                file_name: String::from(upload_data.file.name()),
+                file_name: String::from(upload_data.file.name),
                 status: BatchUploadStatus::AlreadyExists,
                 location: Some(upload_data.url),
                 transaction_signature: None,
@@ -94,7 +94,7 @@ where
 
         for upload_data in to_upload {
             if current_batch.is_empty() {
-                batch_total_name_length += upload_data.file.name().as_bytes().len();
+                batch_total_name_length += upload_data.file.name.as_bytes().len();
                 current_batch.push(upload_data);
                 continue;
             }
@@ -104,10 +104,10 @@ where
             //our current name buffer is under the limit 
             batch_total_name_length < 154 &&
             //the name buffer will be under size with the new file
-            batch_total_name_length + upload_data.file.name().as_bytes().len() < 154
+            batch_total_name_length + upload_data.file.name.as_bytes().len() < 154
             {
                 //add to current batch
-                batch_total_name_length += upload_data.file.name().as_bytes().len();
+                batch_total_name_length += upload_data.file.name.as_bytes().len();
                 current_batch.push(upload_data);
             } else {
                 //create new batch and clear name buffer
@@ -164,7 +164,7 @@ where
                                 batch
                                     .into_iter()
                                     .map(|upload_data| ShadowBatchUploadResponse {
-                                        file_name: String::from(upload_data.file.name()),
+                                        file_name: String::from(upload_data.file.name),
                                         status: BatchUploadStatus::Error(format!("{:?}", error)),
                                         location: None,
                                         transaction_signature: None,
@@ -261,7 +261,7 @@ where
                     file: *file_account,
                 };
                 let args = shdw_drive_instructions::StoreFile {
-                    filename: file.file.name().to_string(),
+                    filename: file.file.name.clone(),
                     sha256_hash: hex::encode(file.sha256_hash.into_bytes()),
                     size: file.size,
                 };
@@ -282,7 +282,7 @@ where
         //construct HTTP form data
         let mut form = Form::new();
         for (_, file) in files_with_pubkeys {
-            form = form.part("file", file.file.to_form_part(file.size).await?);
+            form = form.part("file", file.to_form_part().await?);
         }
 
         let form = form.part("transaction", Part::text(txn_encoded));
@@ -307,7 +307,7 @@ where
         let response = batch
             .iter()
             .map(|file| ShadowBatchUploadResponse {
-                file_name: file.file.name().to_string(),
+                file_name: file.file.name.clone(),
                 status: BatchUploadStatus::Uploaded,
                 location: Some(file.url.clone()),
                 transaction_signature: Some(response.transaction_signature.clone()),

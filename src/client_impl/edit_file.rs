@@ -1,5 +1,4 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
-use cryptohelpers::sha256;
 use reqwest::multipart::{Form, Part};
 use serde_json::Value;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
@@ -9,14 +8,12 @@ use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 use solana_transaction_status::UiTransactionEncoding;
-use std::io::SeekFrom;
 use std::str::FromStr;
-use tokio::io::AsyncSeekExt;
 
 use super::Client;
 use crate::{
     constants::{PROGRAM_ADDRESS, SHDW_DRIVE_ENDPOINT, STORAGE_CONFIG_PDA, TOKEN_MINT, UPLOADER},
-    error::{Error, FileError},
+    error::Error,
     models::*,
 };
 
@@ -28,10 +25,12 @@ where
         &self,
         storage_account_key: &Pubkey,
         url: &str,
-        mut data: ShdwFile,
+        data: ShadowFile,
     ) -> ShadowDriveResult<ShadowUploadResponse> {
-        let file_meta = data.file.metadata().await.map_err(Error::FileSystemError)?;
-        let file_size = file_meta.len();
+        let upload_data = data
+            .prepare_upload(storage_account_key)
+            .await
+            .map_err(Error::FileValidationError)?;
 
         let selected_account = self.get_storage_account(storage_account_key).await?;
 
@@ -46,41 +45,7 @@ where
 
         let file_acct = Pubkey::from_str(&existing_file_data.file_data.file_account_pubkey)?;
 
-        let mut errors = Vec::new();
-        if file_size > 1_073_741_824 {
-            errors.push(FileError {
-                file: data.name.clone(),
-                error: String::from("Exceed the 1GB limit."),
-            });
-        }
-
-        //store any info about file bytes before moving into form
-        let sha256_hash = sha256::compute(&mut data.file)
-            .await
-            .map_err(Error::FileSystemError)?;
-
-        //seek to front of file
-        data.file
-            .seek(SeekFrom::Start(0))
-            .await
-            .map_err(Error::FileSystemError)?;
-
-        //construct file part and create form
-        let mut file_part = Part::stream(data.file);
-        if data.name.as_bytes().len() > 32 {
-            errors.push(FileError {
-                file: data.name.clone(),
-                error: String::from("File name too long. Reduce to 32 bytes long."),
-            });
-        } else {
-            file_part = file_part.file_name(data.name.clone());
-        }
-
-        if errors.len() > 0 {
-            return Err(Error::FileValidationError(errors));
-        }
-
-        let form = Form::new().part("file", file_part);
+        let form = Form::new().part("file", upload_data.to_form_part().await?);
 
         //construct & partial sign txn
         let accounts = shdw_drive_accounts::EditFile {
@@ -93,8 +58,8 @@ where
             system_program: system_program::ID,
         };
         let args = shdw_drive_instructions::EditFile {
-            sha256_hash: hex::encode(sha256_hash.into_bytes()),
-            size: file_size,
+            sha256_hash: hex::encode(upload_data.sha256_hash.into_bytes()),
+            size: upload_data.size,
         };
 
         let instruction = Instruction {

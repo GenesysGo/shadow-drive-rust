@@ -3,13 +3,13 @@ use cryptohelpers::sha256;
 use reqwest::multipart::Part;
 use serde::Deserialize;
 use solana_sdk::pubkey::Pubkey;
-use std::path::{Path, PathBuf};
-use tokio::fs::{self, File};
+use std::path::Path;
+use tokio::fs::File;
 
-use crate::{
-    constants::{FILE_SIZE_LIMIT, SHDW_DRIVE_OBJECT_PREFIX},
-    error::{Error, FileError},
-};
+pub mod payload;
+
+use crate::error::{Error, FileError};
+use payload::Payload;
 
 pub type ShadowDriveResult<T> = Result<T, Error>;
 
@@ -24,13 +24,6 @@ pub struct CreateStorageAccountResponse {
     pub transaction_signature: String,
 }
 
-/// A ShdwFile is the pairing of a filename w/ bytes to be uploaded
-#[derive(Debug)]
-pub struct ShdwFile {
-    pub name: String,
-    pub file: fs::File,
-}
-
 /// UploadingData is a collection of info required for uploading a file
 /// to Shadow Drive. Fields are generally derived from a given [`ShdwFile`] during the upload process.
 #[derive(Debug)]
@@ -41,30 +34,37 @@ pub struct UploadingData {
     pub file: ShadowFile,
 }
 
+impl UploadingData {
+    pub async fn to_form_part(&self) -> ShadowDriveResult<Part> {
+        match &self.file.data {
+            Payload::File(path) => {
+                let file = File::open(path).await.map_err(Error::FileSystemError)?;
+                Ok(Part::stream_with_length(file, self.size).file_name(self.file.name.clone()))
+            }
+            Payload::Bytes(data) => Ok(Part::stream_with_length(Bytes::clone(&data), self.size)
+                .file_name(self.file.name.clone())),
+        }
+    }
+}
+
 #[derive(Debug)]
-pub enum ShadowFile {
-    File { name: String, path: PathBuf },
-    Buf { name: String, data: Bytes },
+pub struct ShadowFile {
+    pub name: String,
+    pub data: Payload,
 }
 
 impl ShadowFile {
-    pub fn name(&self) -> &str {
-        match self {
-            ShadowFile::File { name, .. } => name.as_str(),
-            ShadowFile::Buf { name, .. } => name.as_str(),
-        }
-    }
     pub fn file<T: AsRef<Path>>(name: String, path: T) -> Self {
-        Self::File {
+        Self {
             name,
-            path: path.as_ref().to_owned(),
+            data: Payload::File(path.as_ref().to_owned()),
         }
     }
 
     pub fn bytes<T: Into<Bytes>>(name: String, data: T) -> Self {
-        Self::Buf {
+        Self {
             name,
-            data: data.into(),
+            data: Payload::Bytes(data.into()),
         }
     }
 
@@ -72,149 +72,8 @@ impl ShadowFile {
         self,
         storage_account_key: &Pubkey,
     ) -> Result<UploadingData, Vec<FileError>> {
-        match self {
-            Self::File { name, path } => prepare_file_upload(storage_account_key, name, path).await,
-            Self::Buf { name, data } => prepare_buf_upload(storage_account_key, name, data).await,
-        }
+        Payload::prepare_upload(self.data, storage_account_key, self.name).await
     }
-
-    pub async fn to_form_part(&self, size: u64) -> ShadowDriveResult<Part> {
-        match self {
-            Self::File { name, path } => {
-                let file = File::open(path).await.map_err(Error::FileSystemError)?;
-                Ok(Part::stream_with_length(file, size).file_name(name.clone()))
-            }
-            Self::Buf { name, data } => {
-                Ok(Part::stream_with_length(Bytes::clone(&data), size).file_name(name.clone()))
-            }
-        }
-    }
-}
-
-pub(crate) async fn prepare_buf_upload(
-    storage_account_key: &Pubkey,
-    file_name: String,
-    data: Bytes,
-) -> Result<UploadingData, Vec<FileError>> {
-    let mut errors = Vec::new();
-    let file_size = data.len() as u64;
-    if file_size > FILE_SIZE_LIMIT {
-        errors.push(FileError {
-            file: file_name.clone(),
-            error: String::from("Exceed the 1GB limit."),
-        });
-    }
-
-    if file_name.as_bytes().len() > 32 {
-        errors.push(FileError {
-            file: file_name.clone(),
-            error: String::from("Exceed the 1GB limit."),
-        });
-    }
-
-    //store any info about file bytes before moving into form
-    let sha256_hash = match sha256::compute(&mut data.as_ref()).await {
-        Ok(hash) => hash,
-        Err(err) => {
-            errors.push(FileError {
-                file: file_name.clone(),
-                error: format!("error hashing file: {:?}", err),
-            });
-            return Err(errors);
-        }
-    };
-
-    if errors.len() > 0 {
-        return Err(errors);
-    }
-
-    //this may need to be url encoded
-    let url = format!(
-        "{}/{}/{}",
-        SHDW_DRIVE_OBJECT_PREFIX,
-        storage_account_key.to_string(),
-        &file_name
-    );
-
-    Ok(UploadingData {
-        size: file_size,
-        sha256_hash,
-        url,
-        file: ShadowFile::Buf {
-            name: file_name,
-            data,
-        },
-    })
-}
-
-pub(crate) async fn prepare_file_upload(
-    storage_account_key: &Pubkey,
-    file_name: String,
-    path: PathBuf,
-) -> Result<UploadingData, Vec<FileError>> {
-    let mut file = File::open(&path).await.map_err(|err| {
-        vec![FileError {
-            file: file_name.clone(),
-            error: format!("error opening file: {:?}", err),
-        }]
-    })?;
-
-    let file_meta = file.metadata().await.map_err(|err| {
-        vec![FileError {
-            file: file_name.clone(),
-            error: format!("error opening file metadata: {:?}", err),
-        }]
-    })?;
-
-    let mut errors = Vec::new();
-    let file_size = file_meta.len();
-    if file_size > FILE_SIZE_LIMIT {
-        errors.push(FileError {
-            file: file_name.clone(),
-            error: String::from("Exceed the 1GB limit."),
-        });
-    }
-
-    //store any info about file bytes before moving into form
-    let sha256_hash = match sha256::compute(&mut file).await {
-        Ok(hash) => hash,
-        Err(err) => {
-            errors.push(FileError {
-                file: file_name.clone(),
-                error: format!("error hashing file: {:?}", err),
-            });
-            return Err(errors);
-        }
-    };
-
-    if file_name.as_bytes().len() > 32 {
-        errors.push(FileError {
-            file: file_name.clone(),
-            error: String::from("Exceed the 1GB limit."),
-        });
-    }
-
-    if errors.len() > 0 {
-        return Err(errors);
-    }
-
-    //this may need to be url encoded
-    let url = format!(
-        "{}/{}/{}",
-        SHDW_DRIVE_OBJECT_PREFIX,
-        storage_account_key.to_string(),
-        &file_name
-    );
-
-    Ok(UploadingData {
-        size: file_size,
-        sha256_hash,
-        url,
-        file: ShadowFile::File {
-            name: file_name,
-            path,
-        },
-    })
 }
 
 #[derive(Clone, Debug, Deserialize)]
