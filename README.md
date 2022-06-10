@@ -23,7 +23,7 @@ shadow-drive-rust = "0.1.0"
 
     //create shdw drive client
     let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
-    let shdw_drive_client = Client::new(keypair, solana_rpc);
+    let shdw_drive_client = ShadowDriveClient::new(keypair, solana_rpc);
 
     //derive the storage account pubkey
     let pubkey = keypair.pubkey();

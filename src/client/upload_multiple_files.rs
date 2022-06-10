@@ -12,7 +12,7 @@ use solana_transaction_status::UiTransactionEncoding;
 use std::collections::HashSet;
 use std::time::Duration;
 
-use super::Client;
+use super::ShadowDriveClient;
 use crate::{
     constants::{PROGRAM_ADDRESS, SHDW_DRIVE_ENDPOINT, STORAGE_CONFIG_PDA, TOKEN_MINT, UPLOADER},
     derived_addresses,
@@ -20,11 +20,11 @@ use crate::{
     models::*,
 };
 
-impl<T> Client<T>
+impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// upload_multiple_files uploads a list of [`ShdwFile`]s to Shadow Drive.
+    /// upload_multiple_files uploads a vector of [`ShadowFile`]s to Shadow Drive.
     /// The multiple upload process is done in 4 steps:
     /// 1. Validate & prepare all files into [`UploadingData`]. If a file there are validation errors, the process is aborted.
     /// 2. Filter files that have the same name as a previously uploaded file. Uploads are not attempted for duplicates.

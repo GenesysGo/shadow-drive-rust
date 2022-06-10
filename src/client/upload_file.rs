@@ -9,7 +9,7 @@ use solana_sdk::{
 };
 use solana_transaction_status::UiTransactionEncoding;
 
-use super::Client;
+use super::ShadowDriveClient;
 use crate::{
     constants::{PROGRAM_ADDRESS, SHDW_DRIVE_ENDPOINT, STORAGE_CONFIG_PDA, TOKEN_MINT, UPLOADER},
     derived_addresses,
@@ -17,7 +17,7 @@ use crate::{
     models::*,
 };
 
-impl<T> Client<T>
+impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {

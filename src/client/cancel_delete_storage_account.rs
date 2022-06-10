@@ -6,14 +6,14 @@ use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 
-use super::Client;
+use super::ShadowDriveClient;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
     derived_addresses::stake_account,
     models::*,
 };
 
-impl<T> Client<T>
+impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
@@ -22,7 +22,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use shadow_drive_rust::{Client, derived_addresses::storage_account};
+    /// # use shadow_drive_rust::{ShadowDriveClient, derived_addresses::storage_account};
     /// # use solana_client::rpc_client::RpcClient;
     /// # use solana_sdk::{
     /// # pubkey::Pubkey,
@@ -33,7 +33,7 @@ where
     /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     /// # let user_pubkey = keypair.pubkey();
     /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
-    /// # let shdw_drive_client = Client::new(keypair, rpc_client);
+    /// # let shdw_drive_client = ShadowDriveClient::new(keypair, rpc_client);
     /// # let (storage_account_key, _) = storage_account(&user_pubkey, 0);
     /// #
     /// let cancel_delete_storage_account_response = shdw_drive_client

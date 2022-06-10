@@ -11,7 +11,7 @@ use solana_sdk::{
 use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as TokenProgramID;
 
-use super::Client;
+use super::ShadowDriveClient;
 use crate::constants::EMISSIONS;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
@@ -20,7 +20,7 @@ use crate::{
     models::*,
 };
 
-impl<T> Client<T>
+impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
@@ -30,7 +30,7 @@ where
     ///
     /// ```
     /// # use byte_unit::Byte;
-    /// # use shadow_drive_rust::{Client, derived_addresses::storage_account};
+    /// # use shadow_drive_rust::{ShadowDriveClient, derived_addresses::storage_account};
     /// # use solana_client::rpc_client::RpcClient;
     /// # use solana_sdk::{
     /// # pubkey::Pubkey,
@@ -41,7 +41,7 @@ where
     /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     /// # let user_pubkey = keypair.pubkey();
     /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
-    /// # let shdw_drive_client = Client::new(keypair, rpc_client);
+    /// # let shdw_drive_client = ShadowDriveClient::new(keypair, rpc_client);
     /// # let (storage_account_key, _) = storage_account(&user_pubkey, 0);
     /// # let reduced_bytes = Byte::from_str("1MB").expect("invalid byte string");
     /// #

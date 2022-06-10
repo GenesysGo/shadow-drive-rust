@@ -16,7 +16,7 @@ use solana_transaction_status::UiTransactionEncoding;
 use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as TokenProgram;
 
-use super::Client;
+use super::ShadowDriveClient;
 use crate::{
     constants::{PROGRAM_ADDRESS, SHDW_DRIVE_ENDPOINT, STORAGE_CONFIG_PDA, TOKEN_MINT, UPLOADER},
     derived_addresses,
@@ -24,7 +24,7 @@ use crate::{
     models::*,
 };
 
-impl<T> Client<T>
+impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {

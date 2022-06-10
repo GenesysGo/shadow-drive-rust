@@ -10,7 +10,7 @@ use solana_sdk::{
 use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as TokenProgramID;
 
-use super::Client;
+use super::ShadowDriveClient;
 use crate::constants::EMISSIONS;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
@@ -18,7 +18,7 @@ use crate::{
     models::*,
 };
 
-impl<T> Client<T>
+impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {

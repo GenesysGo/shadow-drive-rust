@@ -1,11 +1,11 @@
-use shadow_drive_rust::Client;
+use shadow_drive_rust::ShadowDriveClient;
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{pubkey::Pubkey, signer::keypair::read_keypair_file};
 use std::str::FromStr;
 
 const KEYPAIR_PATH: &str = "keypair.json";
 
-/// This test doesn't really work.
+/// This example doesn't quite work.
 /// claim_stake is used to redeem SHDW after you reduce the storage amount of an account
 /// In order to successfully claim_stake, the user needs to wait an epoch after reducing storage
 /// Trying to claim_stake in the same epoch as a reduction will result in
@@ -21,7 +21,7 @@ async fn main() {
 
     //create shdw drive client
     let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
-    let shdw_drive_client = Client::new(keypair, solana_rpc);
+    let shdw_drive_client = ShadowDriveClient::new(keypair, solana_rpc);
 
     let url = String::from(
         "https://shdw-drive.genesysgo.net/B7Qk2omAvchkePhzHubCVQuVpZHcieqPQCwFxeeBZGuT/hey.txt",

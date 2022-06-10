@@ -38,7 +38,7 @@ use crate::{
     models::{FileDataResponse, ShadowDriveResult},
 };
 
-pub struct Client<T>
+pub struct ShadowDriveClient<T>
 where
     T: Signer,
 {
@@ -47,7 +47,7 @@ where
     http_client: reqwest::Client,
 }
 
-impl<T> Client<T>
+impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {

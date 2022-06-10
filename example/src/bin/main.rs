@@ -1,5 +1,5 @@
 use byte_unit::Byte;
-use shadow_drive_rust::{models::ShadowFile, Client};
+use shadow_drive_rust::{models::ShadowFile, ShadowDriveClient};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     pubkey::Pubkey,
@@ -18,13 +18,13 @@ async fn main() {
 
     //create shdw drive client
     let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
-    let shdw_drive_client = Client::new(keypair, solana_rpc);
+    let shdw_drive_client = ShadowDriveClient::new(keypair, solana_rpc);
 
     upload_file_test(shdw_drive_client, &storage_account_key).await
 }
 
 async fn list_objects_test<T: Signer + Send + Sync>(
-    shdw_drive_client: Client<T>,
+    shdw_drive_client: ShadowDriveClient<T>,
     storage_account_key: &Pubkey,
 ) {
     let objects = shdw_drive_client
@@ -36,7 +36,7 @@ async fn list_objects_test<T: Signer + Send + Sync>(
 }
 
 async fn make_storage_immutable_test<T: Signer + Send + Sync>(
-    shdw_drive_client: Client<T>,
+    shdw_drive_client: ShadowDriveClient<T>,
     storage_account_key: &Pubkey,
 ) {
     let storage_account = shdw_drive_client
@@ -66,7 +66,7 @@ async fn make_storage_immutable_test<T: Signer + Send + Sync>(
 }
 
 async fn add_storage_test<T: Signer + Send + Sync>(
-    shdw_drive_client: &Client<T>,
+    shdw_drive_client: &ShadowDriveClient<T>,
     storage_account_key: &Pubkey,
 ) {
     let storage_account = shdw_drive_client
@@ -93,7 +93,7 @@ async fn add_storage_test<T: Signer + Send + Sync>(
 }
 
 async fn reduce_storage_test<T: Signer + Send + Sync>(
-    shdw_drive_client: Client<T>,
+    shdw_drive_client: ShadowDriveClient<T>,
     storage_account_key: &Pubkey,
 ) {
     let storage_account = shdw_drive_client
@@ -122,7 +122,7 @@ async fn reduce_storage_test<T: Signer + Send + Sync>(
 }
 
 async fn upload_file_test<T: Signer + Send + Sync>(
-    shdw_drive_client: Client<T>,
+    shdw_drive_client: ShadowDriveClient<T>,
     storage_account_key: &Pubkey,
 ) {
     let upload_reponse = shdw_drive_client
