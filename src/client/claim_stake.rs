@@ -21,7 +21,7 @@ where
 {
     /// Claims any available stake as a result of the `reduce_storage` command.
     /// After reducing storage amount, users must wait until the end of the epoch to successfully claim their stake.
-    /// * `storage_account_key` - The public key of the [`StorageAccount`] that you want to claim excess stake from.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount) that you want to claim excess stake from.
     /// # Example
     ///
     /// ```

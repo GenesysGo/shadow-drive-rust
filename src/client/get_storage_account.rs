@@ -14,8 +14,8 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Returns the [`StorageAccount`] associated with the pubkey provided by a user.
-    /// * `key` - The public key of the [`StorageAccount`].
+    /// Returns the [`StorageAccount`](crate::models::StorageAccount) associated with the pubkey provided by a user.
+    /// * `key` - The public key of the [`StorageAccount`](crate::models::StorageAccount).
     ///
     /// # Example
     ///

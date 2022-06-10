@@ -21,9 +21,9 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Uploads a [`ShadowFile`] to the Shadow Drive, using the specified [`StorageAccount`].
-    /// * `storage_account_key` - The public key of the [`StorageAccount`] that will hold the file.
-    /// * `data` - The [`ShadowFile`] to be uploaded.
+    /// Uploads a [`ShadowFile`](crate::models::ShadowFile) to the Shadow Drive, using the specified [`StorageAccount`](crate::models::StorageAccount).
+    /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount) that will hold the file.
+    /// * `data` - The [`ShadowFile`](crate::models::ShadowFile) to be uploaded.
     /// 
     /// # Example
     ///

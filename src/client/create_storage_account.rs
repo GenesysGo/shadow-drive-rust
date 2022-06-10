@@ -28,10 +28,10 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Creates a [`StorageAccount`] on the Shadow Drive. 
+    /// Creates a [`StorageAccount`](crate::models::StorageAccount) on the Shadow Drive. 
     /// [`StorageAccount`]'s can hold multiple files, and are paid for using the SHDW token.
-    /// * `name` - The name of the [`StorageAccount`]. Does not need to be unique.
-    /// * `size` - The amount of storage the [`StorageAccount`] should be initialized with.
+    /// * `name` - The name of the [`StorageAccount`](crate::models::StorageAccount). Does not need to be unique.
+    /// * `size` - The amount of storage the [`StorageAccount`](crate::models::StorageAccount) should be initialized with.
     /// When specifying size, only KB, MB, and GB storage units are currently supported.
     pub async fn create_storage_account(
         &self,

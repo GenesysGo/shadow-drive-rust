@@ -26,10 +26,10 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Adds storage capacity to the specified [`StorageAccount`].
-    /// * `storage_account_key` - The public key of the [`StorageAccount`].
+    /// Adds storage capacity to the specified [`StorageAccount`](crate::models::StorageAccount).
+    /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount).
     /// * `size` - The additional amount of storage you want to add.
-    /// E.g if you have an existing [`StorageAccount`] with 1MB of storage
+    /// E.g if you have an existing [`StorageAccount`](crate::models::StorageAccount) with 1MB of storage
     /// but you need 2MB total, `size` should equal 1MB. 
     /// When specifying size, only KB, MB, and GB storage units are currently supported.
     /// # Example

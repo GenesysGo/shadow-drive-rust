@@ -24,9 +24,9 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// upload_multiple_files uploads a vector of [`ShadowFile`]s to Shadow Drive.
+    /// upload_multiple_files uploads a vector of [`ShadowFile`](crate::models::ShadowFile)s to Shadow Drive.
     /// The multiple upload process is done in 4 steps:
-    /// 1. Validate & prepare all files into [`UploadingData`]. If a file there are validation errors, the process is aborted.
+    /// 1. Validate & prepare all files into [`UploadingData`](crate::models::UploadingData). If a file there are validation errors, the process is aborted.
     /// 2. Filter files that have the same name as a previously uploaded file. Uploads are not attempted for duplicates.
     /// 3. Divide files to be uploaded into batches of 5 or less to reduce calls but keep transaction size below the limit.
     /// 4. For each batch:
@@ -35,8 +35,8 @@ where
     ///   c. construct & partial sign transaction
     ///   d. submit transaction and files to Shadow Drive as multipart form data
     /// 
-    /// * `storage_account_key` - The public key of the [`StorageAccount`] that will hold the files.
-    /// * `data` - A vector of [`ShadowFile`]s to be uploaded.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount) that will hold the files.
+    /// * `data` - A vector of [`ShadowFile`](crate::models::Shadowfile)s to be uploaded.
     /// 
     /// # Example 
     ///

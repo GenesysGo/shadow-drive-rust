@@ -22,10 +22,10 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Permanently locks a [`StorageAccount`] and all contained files. After a [`StorageAccount`]
+    /// Permanently locks a [`StorageAccount`](crate::models::StorageAccount) and all contained files. After a [`StorageAccount`](crate::models::StorageAccount)
     /// has been locked, a user will no longer be able to delete/edit files, add/reduce storage amount,
-    /// or delete the [`StorageAccount`].
-    /// * `storage_account_key` - The public key of the [`StorageAccount`] that will be made immutable.
+    /// or delete the [`StorageAccount`](crate::models::StorageAccount).
+    /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount) that will be made immutable.
     /// 
     /// # Example
     ///
