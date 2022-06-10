@@ -21,6 +21,8 @@ where
     /// Files marked for deletion are deleted at the end of each Solana epoch.
     /// Marking a file for deletion can be undone with `cancel_delete_file`,
     /// but this must be done before the end of the Solana epoch.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] that contains the file.
+    /// * `url` - The Shadow Drive url of the file you want to mark for deletion.
     /// # Example
     ///
     /// ```

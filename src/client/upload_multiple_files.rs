@@ -34,6 +34,20 @@ where
     ///   b. derive file account pubkey for each file
     ///   c. construct & partial sign transaction
     ///   d. submit transaction and files to Shadow Drive as multipart form data
+    /// 
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] that will hold the files.
+    /// * `data` - A vector of [`ShadowFile`]s to be uploaded.
+    /// 
+    /// # Example 
+    ///
+    /// ```
+    /// # // See the README.md or the example directory for a full example.
+    /// 
+    ///  let upload_results = shdw_drive_client
+    ///     .upload_multiple_files(&storage_account_key, files)
+    ///     .await
+    ///     .expect("failed to upload files");
+    /// ````
     pub async fn upload_multiple_files(
         &self,
         storage_account_key: &Pubkey,

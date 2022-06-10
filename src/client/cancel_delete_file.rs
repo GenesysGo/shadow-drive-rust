@@ -21,6 +21,8 @@ where
 {
     /// Unmarks a file for deletion from the Shadow Drive.
     /// To prevent deletion, this method must be called before the end of the Solana epoch in which `delete_file` is called.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] that contains the file.
+    /// * `url` - The Shadow Drive url of the file you want to unmark for deletion.
     /// # Example
     ///
     /// ```

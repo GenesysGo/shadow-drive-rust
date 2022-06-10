@@ -21,6 +21,32 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
+    /// Uploads a [`ShadowFile`] to the Shadow Drive, using the specified [`StorageAccount`].
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] that will hold the file.
+    /// * `data` - The [`ShadowFile`] to be uploaded.
+    /// 
+    /// # Example
+    ///
+    /// ```
+    /// # use shadow_drive_rust::{ShadowDriveClient, derived_addresses::storage_account, models::ShadowFile};
+    /// # use solana_client::rpc_client::RpcClient;
+    /// # use solana_sdk::{
+    /// # pubkey::Pubkey,
+    /// # signature::Keypair,
+    /// # signer::{keypair::read_keypair_file, Signer},
+    /// # };
+    /// #
+    /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
+    /// # let user_pubkey = keypair.pubkey();
+    /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
+    /// # let shdw_drive_client = ShadowDriveClient::new(keypair, rpc_client);
+    /// # let (storage_account_key, _) = storage_account(&user_pubkey, 0);
+    /// # let file = ShadowFile::file(String::from("example.png"), "example.png")
+    /// #
+    /// let upload_file_response = shdw_drive_client
+    ///     .upload_file(&storage_account_key, file)
+    ///     .await?;
+    /// ````
     pub async fn upload_file<'a>(
         &self,
         storage_account_key: &Pubkey,

@@ -21,7 +21,10 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Replace an existing file on the Shadow Drive with the given new file.
+    /// Replace an existing file on the Shadow Drive with the given updated file.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] that contains the file.
+    /// * `url` - The Shadow Drive url of the file you want to replace.
+    /// * `data` - The updated [`ShadowFile`].
     /// # Example
     ///
     /// ```

@@ -25,7 +25,12 @@ where
     T: Signer + Send + Sync,
 {
     /// Reduces the amount of total storage available for the given storage account.
-    /// Any amount of bytes <= the current storage amount is valid.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] whose storage will be reduced.
+    /// * `size` - The amount of storage you want to remove.
+    /// E.g if you have an existing [`StorageAccount`] with 3MB of storage
+    /// but you want 2MB total, `size` should equal 1MB. 
+    /// When specifying size, only KB, MB, and GB storage units are currently supported.
+    /// 
     /// # Example
     ///
     /// ```

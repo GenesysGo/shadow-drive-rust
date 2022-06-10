@@ -15,6 +15,7 @@ where
     T: Signer + Send + Sync,
 {
     /// Returns the [`StorageAccount`] associated with the pubkey provided by a user.
+    /// * `key` - The public key of the [`StorageAccount`].
     ///
     /// # Example
     ///
@@ -44,7 +45,8 @@ where
             .map_err(Error::AnchorError)
     }
 
-    /// Returns all [`StorageAccount`]s associated with the pubkey provided by a user.
+    /// Returns all [`StorageAccount`]s associated with the public key provided by a user.
+    /// * `owner` - The public key that is the owner of all the returned [`StorageAccount`]s.
     ///
     /// # Example
     ///

@@ -17,8 +17,9 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Unmarks a ['StorageAccount'] for deletion from the Shadow Drive.
+    /// Unmarks a [`StorageAccount`] for deletion from the Shadow Drive.
     /// To prevent deletion, this method must be called before the end of the Solana epoch in which `delete_storage_account` is called.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] that you want to unmark for deletion.
     /// # Example
     ///
     /// ```

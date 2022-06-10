@@ -15,6 +15,8 @@ where
 {
     /// Gets a list of all files associated with a storage account.
     /// The output contains all of the file names as strings.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] that owns the files.
+    /// 
     /// # Example
     ///
     /// ```

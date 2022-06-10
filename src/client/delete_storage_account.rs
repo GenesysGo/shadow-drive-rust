@@ -16,12 +16,13 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    /// Marks a ['StorageAccount'] for deletion from the Shadow Drive.
+    /// Marks a [`StorageAccount`] for deletion from the Shadow Drive.
     /// If an account is marked for deletion, all files within the account will be deleted as well.
-    /// Any stake remaining in the ['StorageAccount'] will be refunded to the creator.
+    /// Any stake remaining in the [`StorageAccount`] will be refunded to the creator.
     /// Accounts marked for deletion are deleted at the end of each Solana epoch.
-    /// Marking a ['StorageAccount'] for deletion can be undone with `cancel_delete_storage_account`,
+    /// Marking a [`StorageAccount`] for deletion can be undone with `cancel_delete_storage_account`,
     /// but this must be done before the end of the Solana epoch.
+    /// * `storage_account_key` - The public key of the [`StorageAccount`] that you want to mark for deletion.
     /// # Example
     ///
     /// ```
