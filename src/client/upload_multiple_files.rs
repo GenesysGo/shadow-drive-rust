@@ -24,7 +24,7 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
-    /// upload_multiple_files uploads a list of [`ShdwFile`]s to Shadow Drive.
+    /// upload_multiple_files uploads a list of [`ShadowFile`]s to Shadow Drive.
     /// The multiple upload process is done in 4 steps:
     /// 1. Validate & prepare all files into [`UploadingData`]. If a file there are validation errors, the process is aborted.
     /// 2. Filter files that have the same name as a previously uploaded file. Uploads are not attempted for duplicates.

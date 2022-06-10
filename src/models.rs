@@ -27,7 +27,7 @@ pub struct CreateStorageAccountResponse {
 }
 
 /// UploadingData is a collection of info required for uploading a file
-/// to Shadow Drive. Fields are generally derived from a given [`ShdwFile`] during the upload process.
+/// to Shadow Drive. Fields are generally derived from a given [`ShadowFile`] during the upload process.
 #[derive(Debug)]
 pub struct UploadingData {
     pub size: u64,
