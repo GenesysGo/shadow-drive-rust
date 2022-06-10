@@ -135,36 +135,3 @@ async fn upload_file_test<T: Signer + Send + Sync>(
 
     println!("Upload complete {:?}", upload_reponse);
 }
-
-// let create_storage = shdw_drive_client
-//     .create_storage_account(
-//         "shdw-drive-rust-test",
-//         Byte::from_str("69 MB").expect("failed to parse byte unit string"),
-//     )
-//     .await
-//     .expect("Failed to create storage account");
-
-// let storage_account = shdw_drive_client
-//     .get_storage_account(&key)
-//     .await
-//     .expect("failed to get storage account");
-// println!("{:#?}", storage_account.identifier);
-
-// let accounts = shdw_drive_client
-//     .get_storage_accounts(&storage_account.owner_1)
-//     .await
-//     .expect("failed to get storage accounts");
-
-// for storage_account in accounts {
-//     println!("{:#?}", storage_account.identifier);
-// }
-
-// let create_storage = shdw_drive_client
-//     .create_storage_account(
-//         "shdw-drive-rust-test",
-//         Byte::from_str("69 MB").expect("failed to parse byte unit string"),
-//     )
-//     .await
-//     .expect("Failed to create storage account");
-
-// println!("{:#?}", create_storage);
