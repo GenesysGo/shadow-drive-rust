@@ -7,7 +7,11 @@ use std::path::Path;
 use tokio::fs::File;
 
 //re-export structs from Shadow Drive Smart Contract that are used in the SDK
-pub use shadow_drive_user_staking::instructions::initialize_account::{StorageAccount, UserInfo};
+pub use shadow_drive_user_staking::instructions::{
+    decrease_storage::UnstakeInfo,
+    initialize_account::{StorageAccount, UserInfo},
+    store_file::File as FileAccount,
+};
 
 pub mod payload;
 
