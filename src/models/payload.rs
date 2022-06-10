@@ -11,7 +11,7 @@ use tokio::fs::File;
 
 use super::{ShadowFile, UploadingData};
 
-/// [`PayloadType`] is an enum containing the types that the
+/// [`Payload`] is an enum containing the types that the
 /// SDK can upload to ShadowDrive. Each variant is expected to implement [`PayloadExt`] so the SDK
 /// can derive required upload metadata.
 #[derive(Debug)]
