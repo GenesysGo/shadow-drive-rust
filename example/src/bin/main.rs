@@ -1,15 +1,10 @@
-use std::{io::SeekFrom, str::FromStr};
-
 use byte_unit::Byte;
-use shadow_drive_rust::{models::ShdwFile, Client};
+use shadow_drive_rust::{models::ShadowFile, Client};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
-    commitment_config::{CommitmentConfig, CommitmentLevel},
     pubkey::Pubkey,
-    signature::Keypair,
     signer::{keypair::read_keypair_file, Signer},
 };
-use tokio::io::AsyncSeekExt;
 
 const KEYPAIR_PATH: &str = "keypair.json";
 
@@ -19,18 +14,13 @@ async fn main() {
     let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     let pubkey = keypair.pubkey();
     let (storage_account_key, _) =
-        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 0);
+        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 5);
 
     //create shdw drive client
-    let solana_rpc = RpcClient::new_with_commitment(
-        "https://ssc-dao.genesysgo.net",
-        CommitmentConfig {
-            commitment: CommitmentLevel::Confirmed,
-        },
-    );
+    let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
     let shdw_drive_client = Client::new(keypair, solana_rpc);
 
-    list_objects_test(shdw_drive_client, &storage_account_key).await;
+    upload_file_test(shdw_drive_client, &storage_account_key).await
 }
 
 async fn list_objects_test<T: Signer + Send + Sync>(
@@ -76,7 +66,7 @@ async fn make_storage_immutable_test<T: Signer + Send + Sync>(
 }
 
 async fn add_storage_test<T: Signer + Send + Sync>(
-    shdw_drive_client: Client<T>,
+    shdw_drive_client: &Client<T>,
     storage_account_key: &Pubkey,
 ) {
     let storage_account = shdw_drive_client
@@ -87,7 +77,7 @@ async fn add_storage_test<T: Signer + Send + Sync>(
     let add_storage_response = shdw_drive_client
         .add_storage(
             storage_account_key,
-            Byte::from_str("1MB").expect("invalid byte string"),
+            Byte::from_str("10MB").expect("invalid byte string"),
         )
         .await
         .expect("error adding storage");
@@ -135,17 +125,10 @@ async fn upload_file_test<T: Signer + Send + Sync>(
     shdw_drive_client: Client<T>,
     storage_account_key: &Pubkey,
 ) {
-    let file = tokio::fs::File::open("example.png")
-        .await
-        .expect("failed to open file");
-
     let upload_reponse = shdw_drive_client
         .upload_file(
             storage_account_key,
-            ShdwFile {
-                name: String::from("example.png"),
-                file,
-            },
+            ShadowFile::file(String::from("example.png"), "example.png"),
         )
         .await
         .expect("failed to upload file");

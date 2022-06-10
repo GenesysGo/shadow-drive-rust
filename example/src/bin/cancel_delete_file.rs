@@ -1,10 +1,6 @@
-use byte_unit::Byte;
-use shadow_drive_rust::{models::ShdwFile, Client};
+use shadow_drive_rust::Client;
 use solana_client::rpc_client::RpcClient;
-use solana_sdk::{
-    pubkey::Pubkey,
-    signer::{keypair::read_keypair_file, Signer},
-};
+use solana_sdk::{pubkey::Pubkey, signer::keypair::read_keypair_file};
 use std::str::FromStr;
 
 const KEYPAIR_PATH: &str = "keypair.json";

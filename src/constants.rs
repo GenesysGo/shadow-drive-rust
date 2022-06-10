@@ -17,3 +17,6 @@ lazy_static! {
 }
 /// Endpoint that is used for file uploads and fetching object data.
 pub const SHDW_DRIVE_ENDPOINT: &'static str = "https://shadow-storage.genesysgo.net";
+pub const SHDW_DRIVE_OBJECT_PREFIX: &'static str = "https://shdw-drive.genesysgo.net";
+
+pub const FILE_SIZE_LIMIT: u64 = 1_073_741_824; //1GB

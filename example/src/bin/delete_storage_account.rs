@@ -10,7 +10,7 @@ async fn main() {
     //load keypair from file
     let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     let storage_account_key =
-        Pubkey::from_str("GHSNTDyMmay7xDjBNd9dqoHTGD3neioLk5VJg2q3fJqr").unwrap();
+        Pubkey::from_str("GkEjMY3fTS8U79dY6bSd5L8LRiL3Ggr7AH2UVbaRVBYC").unwrap();
 
     //create shdw drive client
     let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
