@@ -24,6 +24,31 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
+    /// Reduces the amount of total storage available for the given storage account.
+    /// Any amount of bytes <= the current storage amount is valid.
+    /// # Example
+    ///
+    /// ```
+    /// # use byte_unit::Byte;
+    /// # use shadow_drive_rust::{Client, derived_addresses::storage_account};
+    /// # use solana_client::rpc_client::RpcClient;
+    /// # use solana_sdk::{
+    /// # pubkey::Pubkey,
+    /// # signature::Keypair,
+    /// # signer::{keypair::read_keypair_file, Signer},
+    /// # };
+    /// #
+    /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
+    /// # let user_pubkey = keypair.pubkey();
+    /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
+    /// # let shdw_drive_client = Client::new(keypair, rpc_client);
+    /// # let (storage_account_key, _) = storage_account(&user_pubkey, 0);
+    /// # let reduced_bytes = Byte::from_str("1MB").expect("invalid byte string");
+    /// #
+    /// let reduce_storage_response = shdw_drive_client
+    ///     .reduce_storage(&storage_account_key, reduced_bytes)
+    ///     .await?;
+    /// ```
     pub async fn reduce_storage(
         &self,
         storage_account_key: &Pubkey,
