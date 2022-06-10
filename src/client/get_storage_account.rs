@@ -14,12 +14,59 @@ impl<T> Client<T>
 where
     T: Signer + Send + Sync,
 {
+    /// Returns the [`StorageAccount`] associated with the pubkey provided by a user.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use shadow_drive_rust::{Client, derived_addresses::storage_account};
+    /// # use solana_client::rpc_client::RpcClient;
+    /// # use solana_sdk::{
+    /// # pubkey::Pubkey,
+    /// # signature::Keypair,
+    /// # signer::{keypair::read_keypair_file, Signer},
+    /// # };
+    /// #
+    /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
+    /// # let user_pubkey = keypair.pubkey();
+    /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
+    /// # let shdw_drive_client = Client::new(keypair, rpc_client);
+    /// # let (storage_account_key, _) = storage_account(&user_pubkey, 0);
+    /// #
+    /// let storage_account = shdw_drive_client
+    ///     .get_storage_account(&storage_account_key)
+    ///     .await
+    ///     .expect("failed to get storage account");
+    /// ```
     pub async fn get_storage_account(&self, key: &Pubkey) -> ShadowDriveResult<StorageAccount> {
         let account_info = self.rpc_client.get_account(&key)?;
         StorageAccount::try_deserialize(&mut account_info.data.as_slice())
             .map_err(Error::AnchorError)
     }
 
+    /// Returns all [`StorageAccount`]s associated with the pubkey provided by a user.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use shadow_drive_rust::Client;
+    /// # use solana_client::rpc_client::RpcClient;
+    /// # use solana_sdk::{
+    /// # pubkey::Pubkey,
+    /// # signature::Keypair,
+    /// # signer::{keypair::read_keypair_file, Signer},
+    /// # };
+    /// #
+    /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
+    /// # let user_pubkey = keypair.pubkey();
+    /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
+    /// # let shdw_drive_client = Client::new(keypair, rpc_client);
+    /// #
+    /// let storage_accounts = shdw_drive_client
+    ///     .get_storage_accounts(&user_pubkey)
+    ///     .await
+    ///     .expect("failed to get storage account");
+    /// ```
     pub async fn get_storage_accounts(
         &self,
         owner: &Pubkey,
