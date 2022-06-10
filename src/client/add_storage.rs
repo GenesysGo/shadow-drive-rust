@@ -27,9 +27,9 @@ where
     T: Signer + Send + Sync,
 {
     /// Adds storage capacity to the specific ['StorageAccount'].
-    /// * `size` - The additional amount of storage you want to add. 
-    /// E.g if you have an existing ['StorageAccount'] with 1MB of storage 
-    /// but you need 2MB total, `size` should equal 1MB. 
+    /// * `size` - The additional amount of storage you want to add.
+    /// E.g if you have an existing ['StorageAccount'] with 1MB of storage
+    /// but you need 2MB total, `size` should equal 1MB.
     /// # Example
     ///
     /// ```
