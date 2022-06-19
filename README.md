@@ -2,6 +2,8 @@
 
 Rust SDK for [GenesysGo's Shadow Drive](https://shdw.genesysgo.com/shadow-infrastructure-overview/shadow-drive-overview), a decentralized storage network.
 
+Available on [crates.io](https://crates.io/crates/shadow-drive-rust).
+
 ## Install
 
 Add the crate to your `Cargo.toml`.
