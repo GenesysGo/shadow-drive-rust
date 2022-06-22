@@ -24,7 +24,7 @@ async fn main() {
     let delete_file_response = shdw_drive_client
         .delete_file(&storage_account_key, url)
         .await
-        .expect("failed to request storage account deletion");
+        .expect("failed to delete file");
 
     println!("Delete file complete {:?}", delete_file_response);
 }
