@@ -121,7 +121,7 @@ async fn reduce_storage_test<T: Signer + Send + Sync>(
     let add_storage_response = shdw_drive_client
         .reduce_storage(
             storage_account_key,
-            Byte::from_str("66MB").expect("invalid byte string"),
+            Byte::from_str("10MB").expect("invalid byte string"),
         )
         .await
         .expect("error adding storage");

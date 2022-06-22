@@ -6,8 +6,6 @@ use solana_client::{
     client_error::{ClientError, ClientErrorKind},
     rpc_request::RpcError,
 };
-use solana_sdk::commitment_config::CommitmentConfig;
-use solana_sdk::commitment_config::CommitmentLevel;
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
@@ -30,7 +28,7 @@ where
     /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount).
     /// * `size` - The additional amount of storage you want to add.
     /// E.g if you have an existing [`StorageAccount`](crate::models::StorageAccount) with 1MB of storage
-    /// but you need 2MB total, `size` should equal 1MB. 
+    /// but you need 2MB total, `size` should equal 1MB.
     /// When specifying size, only KB, MB, and GB storage units are currently supported.
     /// # Example
     ///
@@ -119,14 +117,7 @@ where
             self.rpc_client.get_latest_blockhash()?,
         );
 
-        let txn_result = self
-            .rpc_client
-            .send_and_confirm_transaction_with_spinner_and_commitment(
-                &txn,
-                CommitmentConfig {
-                    commitment: CommitmentLevel::Confirmed,
-                },
-            )?;
+        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
 
         Ok(ShdwDriveResponse {
             txid: txn_result.to_string(),

@@ -1,7 +1,6 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction::UnmarkDeleteAccount;
-use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
@@ -75,14 +74,7 @@ where
             self.rpc_client.get_latest_blockhash()?,
         );
 
-        let txn_result = self
-            .rpc_client
-            .send_and_confirm_transaction_with_spinner_and_commitment(
-                &txn,
-                CommitmentConfig {
-                    commitment: CommitmentLevel::Confirmed,
-                },
-            )?;
+        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
 
         Ok(ShdwDriveResponse {
             txid: txn_result.to_string(),
