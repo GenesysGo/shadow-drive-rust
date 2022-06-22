@@ -8,8 +8,7 @@
 //!    let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
 //!
 //!    //create shdw drive client
-//!    let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
-//!    let shdw_drive_client = ShadowDriveClient::new(keypair, solana_rpc);
+//!    let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
 //! ```
 //!
 mod client;
