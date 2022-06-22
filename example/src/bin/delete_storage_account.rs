@@ -1,5 +1,4 @@
 use shadow_drive_rust::ShadowDriveClient;
-use solana_client::rpc_client::RpcClient;
 use solana_sdk::{pubkey::Pubkey, signer::keypair::read_keypair_file};
 use std::str::FromStr;
 
@@ -13,8 +12,7 @@ async fn main() {
         Pubkey::from_str("9VndNFwL7cVTshY2x5GAjKQusRCAsDU4zynYg76xTguo").unwrap();
 
     //create shdw drive client
-    let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
-    let shdw_drive_client = ShadowDriveClient::new(keypair, solana_rpc);
+    let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
 
     let response = shdw_drive_client
         .delete_storage_account(&storage_account_key)
