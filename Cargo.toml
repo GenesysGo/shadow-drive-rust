@@ -3,6 +3,7 @@ name = "shadow-drive-rust"
 version = "0.2.0"
 edition = "2021"
 description = "Rust SDK for GenesysGo's Shadow Drive."
+repository = "https://github.com/VegetarianOrc/shadow-drive-rust"
 license = "GPL-3.0-only"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
