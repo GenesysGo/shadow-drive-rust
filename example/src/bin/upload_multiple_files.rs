@@ -1,7 +1,6 @@
 use byte_unit::Byte;
 use futures::TryStreamExt;
 use shadow_drive_rust::{models::ShadowFile, ShadowDriveClient};
-use solana_client::rpc_client::RpcClient;
 use solana_sdk::signer::{keypair::read_keypair_file, Signer};
 use tokio_stream::StreamExt;
 
@@ -17,11 +16,10 @@ async fn main() {
     let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     let pubkey = keypair.pubkey();
     let (storage_account_key, _) =
-        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 8);
+        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 9);
 
     //create shdw drive client
-    let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
-    let shdw_drive_client = ShadowDriveClient::new(keypair, solana_rpc);
+    let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
 
     //ensure storage account
     if let Err(_) = shdw_drive_client

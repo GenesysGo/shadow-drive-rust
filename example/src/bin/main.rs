@@ -1,6 +1,5 @@
 use byte_unit::Byte;
 use shadow_drive_rust::{models::ShadowFile, ShadowDriveClient};
-use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     pubkey::Pubkey,
     signer::{keypair::read_keypair_file, Signer},
@@ -14,13 +13,29 @@ async fn main() {
     let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
     let pubkey = keypair.pubkey();
     let (storage_account_key, _) =
-        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 5);
+        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 0);
 
     //create shdw drive client
-    let solana_rpc = RpcClient::new("https://ssc-dao.genesysgo.net");
-    let shdw_drive_client = ShadowDriveClient::new(keypair, solana_rpc);
+    let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
 
     upload_file_test(shdw_drive_client, &storage_account_key).await
+}
+
+async fn get_storage_accounts_test<T: Signer + Send + Sync>(
+    shdw_drive_client: ShadowDriveClient<T>,
+    pubkey: &Pubkey,
+) {
+    let storage_accts = shdw_drive_client
+        .get_storage_accounts(pubkey)
+        .await
+        .expect("failed to get storage accounts");
+
+    for storage_acct in storage_accts {
+        println!(
+            "storage account {}: {}",
+            storage_acct.account_counter_seed, storage_acct.identifier
+        );
+    }
 }
 
 async fn list_objects_test<T: Signer + Send + Sync>(
@@ -106,7 +121,7 @@ async fn reduce_storage_test<T: Signer + Send + Sync>(
     let add_storage_response = shdw_drive_client
         .reduce_storage(
             storage_account_key,
-            Byte::from_str("66MB").expect("invalid byte string"),
+            Byte::from_str("10MB").expect("invalid byte string"),
         )
         .await
         .expect("error adding storage");

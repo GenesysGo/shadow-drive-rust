@@ -1,8 +1,6 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
-use solana_sdk::commitment_config::CommitmentConfig;
-use solana_sdk::commitment_config::CommitmentLevel;
 use solana_sdk::sysvar::rent;
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
@@ -26,7 +24,7 @@ where
     /// has been locked, a user will no longer be able to delete/edit files, add/reduce storage amount,
     /// or delete the [`StorageAccount`](crate::models::StorageAccount).
     /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount) that will be made immutable.
-    /// 
+    ///
     /// # Example
     ///
     /// ```
@@ -87,14 +85,7 @@ where
             self.rpc_client.get_latest_blockhash()?,
         );
 
-        let txn_result = self
-            .rpc_client
-            .send_and_confirm_transaction_with_spinner_and_commitment(
-                &txn,
-                CommitmentConfig {
-                    commitment: CommitmentLevel::Confirmed,
-                },
-            )?;
+        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
 
         Ok(ShdwDriveResponse {
             txid: txn_result.to_string(),
