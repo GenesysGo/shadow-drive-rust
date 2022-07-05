@@ -14,9 +14,9 @@ mod claim_stake;
 // mod edit_file;
 mod get_storage_account;
 mod list_objects;
-mod store_files;
-// mod make_storage_immutable;
+mod make_storage_immutable;
 mod reduce_storage;
+mod store_files;
 // mod upload_multiple_files;
 
 pub use add_storage::*;
@@ -29,14 +29,14 @@ pub use claim_stake::*;
 // pub use edit_file::*;
 pub use get_storage_account::*;
 pub use list_objects::*;
-// pub use make_storage_immutable::*;
+pub use make_storage_immutable::*;
 pub use reduce_storage::*;
 pub use store_files::*;
 
 use crate::{
     constants::SHDW_DRIVE_ENDPOINT,
     error::Error,
-    models::{FileDataResponse, ShadowDriveResult},
+    models::{FileDataResponse, ShadowDriveResult, ShdwDriveResponse},
 };
 
 /// Client that allows a user to interact with the Shadow Drive.

@@ -1,15 +1,25 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
+use serde_json::json;
+use serde_json::Value;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
+use shadow_drive_user_staking::instructions::initialize_account::StorageAccountV1;
+use shadow_drive_user_staking::instructions::initialize_account::StorageAccountV2;
+use solana_client::rpc_client::serialize_and_encode;
 use solana_sdk::sysvar::rent;
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
+use solana_transaction_status::UiTransactionEncoding;
 use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as TokenProgramID;
 
 use super::ShadowDriveClient;
 use crate::constants::EMISSIONS;
+use crate::constants::SHDW_DRIVE_ENDPOINT;
+use crate::constants::UPLOADER;
+use crate::error::Error;
+use crate::models::storage_acct::StorageAcct;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
     derived_addresses,
@@ -50,17 +60,60 @@ where
         &self,
         storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
-        let wallet_pubkey = self.wallet.pubkey();
-
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
+
+        let txn_encoded = match selected_storage_acct {
+            StorageAcct::V1(storage_account) => {
+                self.make_storage_immutable_v1(storage_account_key, storage_account)
+                    .await?
+            }
+            StorageAcct::V2(storage_account) => {
+                self.make_storage_immutable_v2(storage_account_key, storage_account)
+                    .await?
+            }
+        };
+
+        let body = serde_json::to_string(&json!({
+           "transaction": txn_encoded,
+           "commitment": "finalized"
+        }))
+        .map_err(Error::InvalidJson)?;
+
+        let response = self
+            .http_client
+            .post(format!("{}/add-storage", SHDW_DRIVE_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .body(body)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(Error::ShadowDriveServerError {
+                status: response.status().as_u16(),
+                message: response.json::<Value>().await?,
+            });
+        }
+
+        let response = response.json::<ShdwDriveResponse>().await?;
+
+        Ok(response)
+    }
+
+    async fn make_storage_immutable_v1(
+        &self,
+        storage_account_key: &Pubkey,
+        storage_account: StorageAccountV1,
+    ) -> ShadowDriveResult<String> {
+        let wallet_pubkey = self.wallet.pubkey();
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
         let emeissions_ata = get_associated_token_address(&EMISSIONS, &TOKEN_MINT);
         let (stake_account, _) = derived_addresses::stake_account(&storage_account_key);
 
-        let accounts = shdw_drive_accounts::MakeAccountImmutable {
+        let accounts = shdw_drive_accounts::MakeAccountImmutableV1 {
             storage_config: *STORAGE_CONFIG_PDA,
             storage_account: *storage_account_key,
-            owner: selected_storage_acct.owner_1,
+            owner: storage_account.owner_1,
+            uploader: UPLOADER,
             owner_ata,
             stake_account,
             emissions_wallet: emeissions_ata,
@@ -78,17 +131,49 @@ where
             data: args.data(),
         };
 
-        let txn = Transaction::new_signed_with_payer(
-            &[instruction],
-            Some(&wallet_pubkey),
-            &[&self.wallet],
-            self.rpc_client.get_latest_blockhash()?,
-        );
+        let txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
 
-        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
+        let txn_encoded = serialize_and_encode(&txn, UiTransactionEncoding::Base64)?;
 
-        Ok(ShdwDriveResponse {
-            txid: txn_result.to_string(),
-        })
+        Ok(txn_encoded)
+    }
+
+    async fn make_storage_immutable_v2(
+        &self,
+        storage_account_key: &Pubkey,
+        storage_account: StorageAccountV2,
+    ) -> ShadowDriveResult<String> {
+        let wallet_pubkey = self.wallet.pubkey();
+        let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
+        let emeissions_ata = get_associated_token_address(&EMISSIONS, &TOKEN_MINT);
+        let (stake_account, _) = derived_addresses::stake_account(&storage_account_key);
+
+        let accounts = shdw_drive_accounts::MakeAccountImmutableV2 {
+            storage_config: *STORAGE_CONFIG_PDA,
+            storage_account: *storage_account_key,
+            owner: storage_account.owner_1,
+            uploader: UPLOADER,
+            owner_ata,
+            stake_account,
+            emissions_wallet: emeissions_ata,
+            token_mint: TOKEN_MINT,
+            system_program: system_program::ID,
+            token_program: TokenProgramID,
+            associated_token_program: spl_associated_token_account::ID,
+            rent: rent::ID,
+        };
+        let args = shdw_drive_instructions::MakeAccountImmutable2 {};
+
+        let instruction = Instruction {
+            program_id: PROGRAM_ADDRESS,
+            accounts: accounts.to_account_metas(None),
+            data: args.data(),
+        };
+
+        let txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
+
+        let txn_encoded = serialize_and_encode(&txn, UiTransactionEncoding::Base64)?;
+
+        Ok(txn_encoded)
     }
 }
