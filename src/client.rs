@@ -16,7 +16,7 @@ mod get_storage_account;
 mod store_files;
 // mod list_objects;
 // mod make_storage_immutable;
-// mod reduce_storage;
+mod reduce_storage;
 // mod upload_file;
 // mod upload_multiple_files;
 
@@ -31,7 +31,7 @@ pub use add_storage::*;
 pub use get_storage_account::*;
 // pub use list_objects::*;
 // pub use make_storage_immutable::*;
-// pub use reduce_storage::*;
+pub use reduce_storage::*;
 pub use store_files::*;
 
 use crate::{

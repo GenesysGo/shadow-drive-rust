@@ -211,12 +211,7 @@ where
             data: args.data(),
         };
 
-        let mut txn = Transaction::new_signed_with_payer(
-            &[instruction],
-            Some(&wallet_pubkey),
-            &[&self.wallet],
-            self.rpc_client.get_latest_blockhash()?,
-        );
+        let mut txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
 
         txn.try_partial_sign(&[&self.wallet], self.rpc_client.get_latest_blockhash()?)?;
 
