@@ -13,13 +13,14 @@ bytes = "^1"
 cryptohelpers = {version = "^2.0.0", features= ["async", "sha256"]}
 futures = "^0.3"
 hex = "^0.4"
+itertools = "0.10.3"
 solana-client = "^1.9"
 solana-transaction-status = "^1.9"
 solana-account-decoder = "^1.9"
 solana-sdk = "^1.9"
 spl-associated-token-account = "^1"
 spl-token = "^3"
-shadow-drive-user-staking = {version = "0.1.1", features = ["no-entrypoint"]}
+shadow-drive-user-staking = {version = "1.0.0-alpha", features = ["no-entrypoint"]}
 anchor-lang = "^0.24"
 async-trait = "^0.1"
 byte-unit = "^4"
@@ -29,3 +30,4 @@ serde_json = "^1"
 reqwest = {version = "^0.11", features = ["multipart", "stream"]}
 tokio = {version = "1.18.2", features = ["rt", "fs", "io-util"]}
 tracing = "^0.1"
+sodalite = "0.4.0"

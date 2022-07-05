@@ -1,5 +1,7 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
-use shadow_drive_user_staking::instructions::initialize_account::StorageAccount;
+use shadow_drive_user_staking::instructions::initialize_account::{
+    StorageAccount, StorageAccountV1,
+};
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::{
     rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
@@ -8,7 +10,11 @@ use solana_client::{
 use solana_sdk::{bs58, pubkey::Pubkey, signer::Signer};
 
 use super::ShadowDriveClient;
-use crate::{constants::PROGRAM_ADDRESS, error::Error, models::*};
+use crate::{
+    constants::PROGRAM_ADDRESS,
+    error::Error,
+    models::{storage_acct::StorageAcct, *},
+};
 
 impl<T> ShadowDriveClient<T>
 where
@@ -39,10 +45,9 @@ where
     ///     .await
     ///     .expect("failed to get storage account");
     /// ```
-    pub async fn get_storage_account(&self, key: &Pubkey) -> ShadowDriveResult<StorageAccount> {
+    pub async fn get_storage_account(&self, key: &Pubkey) -> ShadowDriveResult<StorageAcct> {
         let account_info = self.rpc_client.get_account(&key)?;
-        StorageAccount::try_deserialize(&mut account_info.data.as_slice())
-            .map_err(Error::AnchorError)
+        StorageAcct::deserialize(&mut account_info.data.as_slice()).map_err(Error::AnchorError)
     }
 
     /// Returns all [`StorageAccount`]s associated with the public key provided by a user.
@@ -69,45 +74,47 @@ where
     ///     .await
     ///     .expect("failed to get storage account");
     /// ```
-    pub async fn get_storage_accounts(
-        &self,
-        owner: &Pubkey,
-    ) -> ShadowDriveResult<Vec<StorageAccount>> {
-        let account_type_filter = RpcFilterType::Memcmp(Memcmp {
-            offset: 0,
-            bytes: MemcmpEncodedBytes::Base58(
-                bs58::encode(StorageAccount::discriminator()).into_string(),
-            ),
-            encoding: None,
-        });
+    pub fn tmp() {}
 
-        let owner_filter = RpcFilterType::Memcmp(Memcmp {
-            offset: 39,
-            bytes: MemcmpEncodedBytes::Bytes(owner.to_bytes().to_vec()),
-            encoding: None,
-        });
+    // pub async fn get_storage_accounts(
+    //     &self,
+    //     owner: &Pubkey,
+    // ) -> ShadowDriveResult<Vec<StorageAccount>> {
+    //     let account_type_filter = RpcFilterType::Memcmp(Memcmp {
+    //         offset: 0,
+    //         bytes: MemcmpEncodedBytes::Base58(
+    //             bs58::encode(StorageAccount::discriminator()).into_string(),
+    //         ),
+    //         encoding: None,
+    //     });
 
-        let get_accounts_config = RpcProgramAccountsConfig {
-            filters: Some(vec![account_type_filter, owner_filter]),
-            account_config: RpcAccountInfoConfig {
-                encoding: Some(UiAccountEncoding::Base64),
-                ..RpcAccountInfoConfig::default()
-            },
-            ..RpcProgramAccountsConfig::default()
-        };
+    //     let owner_filter = RpcFilterType::Memcmp(Memcmp {
+    //         offset: 39,
+    //         bytes: MemcmpEncodedBytes::Bytes(owner.to_bytes().to_vec()),
+    //         encoding: None,
+    //     });
 
-        let accounts = self
-            .rpc_client
-            .get_program_accounts_with_config(&PROGRAM_ADDRESS, get_accounts_config)?;
+    //     let get_accounts_config = RpcProgramAccountsConfig {
+    //         filters: Some(vec![account_type_filter, owner_filter]),
+    //         account_config: RpcAccountInfoConfig {
+    //             encoding: Some(UiAccountEncoding::Base64),
+    //             ..RpcAccountInfoConfig::default()
+    //         },
+    //         ..RpcProgramAccountsConfig::default()
+    //     };
 
-        let accounts = accounts
-            .into_iter()
-            .map(|(_, account)| {
-                StorageAccount::try_deserialize(&mut account.data.as_slice())
-                    .map_err(Error::AnchorError)
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+    //     let accounts = self
+    //         .rpc_client
+    //         .get_program_accounts_with_config(&PROGRAM_ADDRESS, get_accounts_config)?;
 
-        Ok(accounts)
-    }
+    //     let accounts = accounts
+    //         .into_iter()
+    //         .map(|(_, account)| {
+    //             StorageAccount::try_deserialize(&mut account.data.as_slice())
+    //                 .map_err(Error::AnchorError)
+    //         })
+    //         .collect::<Result<Vec<_>, _>>()?;
+
+    //     Ok(accounts)
+    // }
 }

@@ -13,6 +13,7 @@
 //!
 mod client;
 pub use client::*;
+pub use shadow_drive_user_staking::instructions::initialize_account::StorageAccount;
 
 pub mod constants;
 pub mod derived_addresses;

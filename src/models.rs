@@ -14,6 +14,7 @@ pub use shadow_drive_user_staking::instructions::{
 };
 
 pub mod payload;
+pub mod storage_acct;
 
 use crate::error::{Error, FileError};
 use payload::Payload;
@@ -58,19 +59,26 @@ impl UploadingData {
 pub struct ShadowFile {
     pub name: String,
     pub data: Payload,
+    pub content_type: String,
 }
 
 impl ShadowFile {
-    pub fn file<T: AsRef<Path>>(name: String, path: T) -> Self {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn file<T: AsRef<Path>>(name: String, content_type: String, path: T) -> Self {
         Self {
             name,
+            content_type,
             data: Payload::File(path.as_ref().to_owned()),
         }
     }
 
-    pub fn bytes<T: Into<Bytes>>(name: String, data: T) -> Self {
+    pub fn bytes<T: Into<Bytes>>(name: String, content_type: String, data: T) -> Self {
         Self {
             name,
+            content_type,
             data: Payload::Bytes(data.into()),
         }
     }
@@ -81,12 +89,39 @@ impl ShadowFile {
     ) -> Result<UploadingData, Vec<FileError>> {
         Payload::prepare_upload(self.data, storage_account_key, self.name).await
     }
+
+    pub async fn into_form_part(self) -> ShadowDriveResult<Part> {
+        match self.data {
+            Payload::File(path) => {
+                let file = File::open(path).await.map_err(Error::FileSystemError)?;
+                let file_meta = file.metadata().await.map_err(Error::FileSystemError)?;
+                Ok(Part::stream_with_length(file, file_meta.len())
+                    .file_name(self.name)
+                    .mime_str(&self.content_type)?)
+            }
+            Payload::Bytes(data) => Ok(Part::stream_with_length(
+                Bytes::clone(&data),
+                data.len() as u64,
+            )
+            .file_name(self.name)
+            .mime_str(&self.content_type)?),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ShadowUploadResponse {
-    pub finalized_location: String,
-    pub transaction_signature: String,
+    pub finalized_locations: String,
+    pub message: String,
+    #[serde(default)]
+    pub upload_errors: Vec<UploadError>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct UploadError {
+    pub file: String,
+    pub storage_account: String,
+    pub error: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]

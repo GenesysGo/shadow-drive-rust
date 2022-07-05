@@ -1,15 +1,16 @@
 use crate::{
     constants::{FILE_SIZE_LIMIT, SHDW_DRIVE_OBJECT_PREFIX},
-    error::FileError,
+    error::{Error, FileError},
 };
 use async_trait::async_trait;
 use bytes::Bytes;
 use cryptohelpers::sha256;
+use reqwest::multipart::Part;
 use solana_sdk::pubkey::Pubkey;
 use std::path::PathBuf;
 use tokio::fs::File;
 
-use super::{ShadowFile, UploadingData};
+use super::{ShadowDriveResult, ShadowFile, UploadingData};
 
 /// [`Payload`] is an enum containing the types that the
 /// SDK can upload to ShadowDrive. Each variant is expected to implement [`PayloadExt`] so the SDK
@@ -115,6 +116,8 @@ impl PayloadExt for PathBuf {
             url,
             file: ShadowFile {
                 name: file_name.clone(),
+                //TODO: Fix this content type
+                content_type: String::from("testing content type"),
                 data: Payload::File(self),
             },
         })
@@ -174,6 +177,8 @@ impl PayloadExt for Bytes {
             url,
             file: ShadowFile {
                 name: file_name,
+                //TODO: Fix this content type
+                content_type: String::from("testing content type"),
                 data: Payload::Bytes(self),
             },
         })
