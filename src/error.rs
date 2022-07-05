@@ -12,6 +12,7 @@ pub enum Error {
         status: u16,
         message: serde_json::Value,
     },
+    InvalidJson(serde_json::Error),
     SolanaRpcError(ClientError),
     AccountDeserializeError(IoError),
     InvalidStorage,

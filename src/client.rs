@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer};
 
-// mod add_storage;
+mod add_storage;
 // mod cancel_delete_file;
 // mod cancel_delete_storage_account;
 // mod claim_stake;
@@ -20,7 +20,7 @@ mod store_files;
 // mod upload_file;
 // mod upload_multiple_files;
 
-// pub use add_storage::*;
+pub use add_storage::*;
 // pub use cancel_delete_file::*;
 // pub use cancel_delete_storage_account::*;
 // pub use claim_stake::*;
@@ -32,8 +32,7 @@ pub use get_storage_account::*;
 // pub use list_objects::*;
 // pub use make_storage_immutable::*;
 // pub use reduce_storage::*;
-// pub use upload_file::*;
-// pub use upload_multiple_files::*;
+pub use store_files::*;
 
 use crate::{
     constants::SHDW_DRIVE_ENDPOINT,
