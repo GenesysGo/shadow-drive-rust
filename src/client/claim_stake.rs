@@ -1,6 +1,9 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
-use shadow_drive_user_staking::accounts as shdw_drive_accounts;
-use shadow_drive_user_staking::instruction::ClaimStake;
+use shadow_drive_user_staking::instruction as shdw_drive_instructions;
+use shadow_drive_user_staking::instructions::initialize_account::StorageAccountV2;
+use shadow_drive_user_staking::{
+    accounts as shdw_drive_accounts, instructions::initialize_account::StorageAccountV1,
+};
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
@@ -10,7 +13,7 @@ use super::ShadowDriveClient;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
     derived_addresses::*,
-    models::*,
+    models::{storage_acct::StorageAcct, *},
 };
 use spl_token::ID as TokenProgramID;
 
@@ -46,27 +49,49 @@ where
         &self,
         storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
-        let wallet = &self.wallet;
-        let wallet_pubkey = wallet.pubkey();
-
         let selected_account = self.get_storage_account(storage_account_key).await?;
+
+        let txn = match selected_account {
+            StorageAcct::V1(storage_account) => {
+                self.claim_stake_v1(storage_account_key, storage_account)
+                    .await?
+            }
+            StorageAcct::V2(storage_account) => {
+                self.claim_stake_v2(storage_account_key, storage_account)
+                    .await?
+            }
+        };
+
+        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
+
+        Ok(ShdwDriveResponse {
+            txid: txn_result.to_string(),
+        })
+    }
+
+    async fn claim_stake_v1(
+        &self,
+        storage_account_key: &Pubkey,
+        storage_account: StorageAccountV1,
+    ) -> ShadowDriveResult<Transaction> {
+        let wallet_pubkey = self.wallet.pubkey();
         let unstake_account = unstake_account(&storage_account_key).0;
         let unstake_info_account = unstake_info(&storage_account_key).0;
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
 
-        let accounts = shdw_drive_accounts::ClaimStake {
+        let accounts = shdw_drive_accounts::ClaimStakeV1 {
             storage_config: *STORAGE_CONFIG_PDA,
             storage_account: *storage_account_key,
             unstake_info: unstake_info_account,
             unstake_account,
-            owner: selected_account.owner_1,
+            owner: storage_account.owner_1,
             owner_ata,
             token_mint: TOKEN_MINT,
             system_program: system_program::ID,
             token_program: TokenProgramID,
         };
 
-        let args = ClaimStake {};
+        let args = shdw_drive_instructions::ClaimStake {};
 
         let instruction = Instruction {
             program_id: PROGRAM_ADDRESS,
@@ -81,10 +106,46 @@ where
             self.rpc_client.get_latest_blockhash()?,
         );
 
-        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
+        Ok(txn)
+    }
 
-        Ok(ShdwDriveResponse {
-            txid: txn_result.to_string(),
-        })
+    async fn claim_stake_v2(
+        &self,
+        storage_account_key: &Pubkey,
+        storage_account: StorageAccountV2,
+    ) -> ShadowDriveResult<Transaction> {
+        let wallet_pubkey = self.wallet.pubkey();
+        let unstake_account = unstake_account(&storage_account_key).0;
+        let unstake_info_account = unstake_info(&storage_account_key).0;
+        let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
+
+        let accounts = shdw_drive_accounts::ClaimStakeV2 {
+            storage_config: *STORAGE_CONFIG_PDA,
+            storage_account: *storage_account_key,
+            unstake_info: unstake_info_account,
+            unstake_account,
+            owner: storage_account.owner_1,
+            owner_ata,
+            token_mint: TOKEN_MINT,
+            system_program: system_program::ID,
+            token_program: TokenProgramID,
+        };
+
+        let args = shdw_drive_instructions::ClaimStake2 {};
+
+        let instruction = Instruction {
+            program_id: PROGRAM_ADDRESS,
+            accounts: accounts.to_account_metas(None),
+            data: args.data(),
+        };
+
+        let txn = Transaction::new_signed_with_payer(
+            &[instruction],
+            Some(&wallet_pubkey),
+            &[&self.wallet],
+            self.rpc_client.get_latest_blockhash()?,
+        );
+
+        Ok(txn)
     }
 }
