@@ -1,6 +1,4 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
-use serde_json::json;
-use serde_json::Value;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
 use shadow_drive_user_staking::instructions::initialize_account::StorageAccountV1;
@@ -16,9 +14,7 @@ use spl_token::ID as TokenProgramID;
 
 use super::ShadowDriveClient;
 use crate::constants::EMISSIONS;
-use crate::constants::SHDW_DRIVE_ENDPOINT;
 use crate::constants::UPLOADER;
-use crate::error::Error;
 use crate::models::storage_acct::StorageAcct;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
@@ -73,30 +69,7 @@ where
             }
         };
 
-        let body = serde_json::to_string(&json!({
-           "transaction": txn_encoded,
-           "commitment": "finalized"
-        }))
-        .map_err(Error::InvalidJson)?;
-
-        let response = self
-            .http_client
-            .post(format!("{}/add-storage", SHDW_DRIVE_ENDPOINT))
-            .header("Content-Type", "application/json")
-            .body(body)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            return Err(Error::ShadowDriveServerError {
-                status: response.status().as_u16(),
-                message: response.json::<Value>().await?,
-            });
-        }
-
-        let response = response.json::<ShdwDriveResponse>().await?;
-
-        Ok(response)
+        self.send_shdw_txn("make-immutable", txn_encoded).await
     }
 
     async fn make_storage_immutable_v1(
@@ -107,7 +80,7 @@ where
         let wallet_pubkey = self.wallet.pubkey();
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
         let emeissions_ata = get_associated_token_address(&EMISSIONS, &TOKEN_MINT);
-        let (stake_account, _) = derived_addresses::stake_account(&storage_account_key);
+        let (stake_account, _) = derived_addresses::stake_account(storage_account_key);
 
         let accounts = shdw_drive_accounts::MakeAccountImmutableV1 {
             storage_config: *STORAGE_CONFIG_PDA,
@@ -146,7 +119,7 @@ where
         let wallet_pubkey = self.wallet.pubkey();
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
         let emeissions_ata = get_associated_token_address(&EMISSIONS, &TOKEN_MINT);
-        let (stake_account, _) = derived_addresses::stake_account(&storage_account_key);
+        let (stake_account, _) = derived_addresses::stake_account(storage_account_key);
 
         let accounts = shdw_drive_accounts::MakeAccountImmutableV2 {
             storage_config: *STORAGE_CONFIG_PDA,

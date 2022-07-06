@@ -75,8 +75,8 @@ where
         storage_account: StorageAccountV1,
     ) -> ShadowDriveResult<Transaction> {
         let wallet_pubkey = self.wallet.pubkey();
-        let unstake_account = unstake_account(&storage_account_key).0;
-        let unstake_info_account = unstake_info(&storage_account_key).0;
+        let unstake_account = unstake_account(storage_account_key).0;
+        let unstake_info_account = unstake_info(storage_account_key).0;
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
 
         let accounts = shdw_drive_accounts::ClaimStakeV1 {
@@ -115,8 +115,8 @@ where
         storage_account: StorageAccountV2,
     ) -> ShadowDriveResult<Transaction> {
         let wallet_pubkey = self.wallet.pubkey();
-        let unstake_account = unstake_account(&storage_account_key).0;
-        let unstake_info_account = unstake_info(&storage_account_key).0;
+        let unstake_account = unstake_account(storage_account_key).0;
+        let unstake_info_account = unstake_info(storage_account_key).0;
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
 
         let accounts = shdw_drive_accounts::ClaimStakeV2 {

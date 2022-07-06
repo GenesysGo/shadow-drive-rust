@@ -10,8 +10,7 @@ use crate::{constants::SHDW_DRIVE_ENDPOINT, error::Error, models::*};
 fn upload_message(storage_account_key: &Pubkey, filename_hash: &str) -> String {
     format!(
         "Shadow Drive Signed Message:\nStorage Account: {}\nUpload files with hash: {}",
-        storage_account_key.to_string(),
-        filename_hash
+        storage_account_key, filename_hash
     )
 }
 

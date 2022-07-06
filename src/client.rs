@@ -10,7 +10,7 @@ mod add_storage;
 mod claim_stake;
 // mod create_storage_account;
 // mod delete_file;
-// mod delete_storage_account;
+mod delete_storage_account;
 // mod edit_file;
 mod get_storage_account;
 mod list_objects;
@@ -25,7 +25,7 @@ pub use add_storage::*;
 pub use claim_stake::*;
 // pub use create_storage_account::*;
 // pub use delete_file::*;
-// pub use delete_storage_account::*;
+pub use delete_storage_account::*;
 // pub use edit_file::*;
 pub use get_storage_account::*;
 pub use list_objects::*;
@@ -124,6 +124,37 @@ where
         }
 
         let response = response.json::<FileDataResponse>().await?;
+
+        Ok(response)
+    }
+
+    async fn send_shdw_txn(
+        &self,
+        uri: &str,
+        txn_encoded: String,
+    ) -> ShadowDriveResult<ShdwDriveResponse> {
+        let body = serde_json::to_string(&json!({
+           "transaction": txn_encoded,
+           "commitment": "finalized"
+        }))
+        .map_err(Error::InvalidJson)?;
+
+        let response = self
+            .http_client
+            .post(format!("{}/{}", SHDW_DRIVE_ENDPOINT, uri))
+            .header("Content-Type", "application/json")
+            .body(body)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(Error::ShadowDriveServerError {
+                status: response.status().as_u16(),
+                message: response.json::<Value>().await?,
+            });
+        }
+
+        let response = response.json::<ShdwDriveResponse>().await?;
 
         Ok(response)
     }

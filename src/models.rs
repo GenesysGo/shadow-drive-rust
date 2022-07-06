@@ -48,7 +48,7 @@ impl UploadingData {
                 let file = File::open(path).await.map_err(Error::FileSystemError)?;
                 Ok(Part::stream_with_length(file, self.size).file_name(self.file.name.clone()))
             }
-            Payload::Bytes(data) => Ok(Part::stream_with_length(Bytes::clone(&data), self.size)
+            Payload::Bytes(data) => Ok(Part::stream_with_length(Bytes::clone(data), self.size)
                 .file_name(self.file.name.clone())),
         }
     }
