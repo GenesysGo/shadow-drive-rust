@@ -1,16 +1,8 @@
-use anchor_lang::{system_program, InstructionData, ToAccountMetas};
-use shadow_drive_user_staking::accounts as shdw_drive_accounts;
-use shadow_drive_user_staking::instruction::RequestDeleteFile;
-use solana_sdk::{
-    instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
-};
-use std::str::FromStr;
+use serde_json::{json, Value};
+use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
 use super::ShadowDriveClient;
-use crate::{
-    constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
-    models::*,
-};
+use crate::{constants::SHDW_DRIVE_ENDPOINT, error::Error, models::*};
 
 impl<T> ShadowDriveClient<T>
 where
@@ -48,44 +40,42 @@ where
         &self,
         storage_account_key: &Pubkey,
         url: String,
-    ) -> ShadowDriveResult<ShdwDriveResponse> {
-        let wallet = &self.wallet;
-        let wallet_pubkey = wallet.pubkey();
+    ) -> ShadowDriveResult<()> {
+        let message_to_sign = delete_file_message(storage_account_key, &url);
 
-        let selected_account = self.get_storage_account(storage_account_key).await?;
+        //Signature implements Display as a base58 encoded string
+        let signature = self
+            .wallet
+            .sign_message(message_to_sign.as_bytes())
+            .to_string();
 
-        let response = self.get_object_data(&url).await?;
+        let body = json!({
+            "signer": self.wallet.pubkey(),
+            "message": signature,
+            "location": url,
+        });
 
-        let file_key = Pubkey::from_str(&response.file_data.file_account_pubkey)?;
+        let response = self
+            .http_client
+            .post(format!("{}/delete-file", SHDW_DRIVE_ENDPOINT))
+            .json(&body)
+            .send()
+            .await?;
 
-        let accounts = shdw_drive_accounts::RequestDeleteFile {
-            storage_config: *STORAGE_CONFIG_PDA,
-            storage_account: *storage_account_key,
-            file: file_key,
-            owner: selected_account.owner_1,
-            token_mint: TOKEN_MINT,
-            system_program: system_program::ID,
-        };
+        if !response.status().is_success() {
+            return Err(Error::ShadowDriveServerError {
+                status: response.status().as_u16(),
+                message: response.json::<Value>().await?,
+            });
+        }
 
-        let args = RequestDeleteFile {};
-
-        let instruction = Instruction {
-            program_id: PROGRAM_ADDRESS,
-            accounts: accounts.to_account_metas(None),
-            data: args.data(),
-        };
-
-        let txn = Transaction::new_signed_with_payer(
-            &[instruction],
-            Some(&wallet_pubkey),
-            &[&self.wallet],
-            self.rpc_client.get_latest_blockhash()?,
-        );
-
-        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
-
-        Ok(ShdwDriveResponse {
-            txid: txn_result.to_string(),
-        })
+        Ok(())
     }
+}
+
+fn delete_file_message(storage_account_key: &Pubkey, url: &str) -> String {
+    format!(
+        "Shadow Drive Signed Message:\nStorageAccount: {}\nFile to delete: {}",
+        storage_account_key, url
+    )
 }
