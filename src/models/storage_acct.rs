@@ -1,13 +1,13 @@
-use anchor_lang::{AccountDeserialize, Discriminator};
+use anchor_lang::{prelude::Pubkey, AccountDeserialize, Discriminator};
 use shadow_drive_user_staking::instructions::initialize_account::{
-    StorageAccount, StorageAccountV1, StorageAccountV2,
+    ShadowDriveStorageAccount, StorageAccount, StorageAccountV2,
 };
 
 type Storage = u64;
 type Epoch = u32;
 
 pub enum StorageAcct {
-    V1(StorageAccountV1),
+    V1(StorageAccount),
     V2(StorageAccountV2),
 }
 
@@ -18,8 +18,8 @@ impl StorageAcct {
                 <StorageAccountV2 as AccountDeserialize>::try_deserialize_unchecked(buf)
                     .map(Self::V2)
             }
-            discriminator if discriminator == StorageAccountV1::discriminator() => {
-                StorageAccountV1::try_deserialize_unchecked(buf).map(Self::V1)
+            discriminator if discriminator == StorageAccount::discriminator() => {
+                StorageAccount::try_deserialize_unchecked(buf).map(Self::V1)
             }
             _ => Err(anchor_lang::error::ErrorCode::AccountDiscriminatorMismatch.into()),
         }
@@ -48,7 +48,7 @@ macro_rules! storage_acct_setter {
     };
 }
 
-impl StorageAccount for StorageAcct {
+impl ShadowDriveStorageAccount for StorageAcct {
     storage_acct_getter!(check_immutable, bool);
     storage_acct_getter!(check_delete_flag, bool);
     storage_acct_getter!(get_identifier, String);
@@ -57,4 +57,11 @@ impl StorageAccount for StorageAcct {
 
     storage_acct_setter!(mark_to_delete);
     storage_acct_setter!(update_last_fee_epoch);
+
+    fn is_owner(&self, owner: Pubkey) -> bool {
+        match self {
+            Self::V1(v1) => v1.is_owner(owner),
+            Self::V2(v2) => v2.is_owner(owner),
+        }
+    }
 }

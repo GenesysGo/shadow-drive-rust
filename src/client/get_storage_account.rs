@@ -1,8 +1,5 @@
 use anchor_lang::{AccountDeserialize, Discriminator};
-use shadow_drive_user_staking::instructions::initialize_account::{
-    StorageAccount, StorageAccountV1,
-};
-use solana_account_decoder::UiAccountEncoding;
+use shadow_drive_user_staking::instructions::initialize_account::StorageAccount;
 use solana_client::{
     rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
     rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
@@ -46,7 +43,7 @@ where
     ///     .expect("failed to get storage account");
     /// ```
     pub async fn get_storage_account(&self, key: &Pubkey) -> ShadowDriveResult<StorageAcct> {
-        let account_info = self.rpc_client.get_account(&key)?;
+        let account_info = self.rpc_client.get_account(&key).await?;
         StorageAcct::deserialize(&mut account_info.data.as_slice()).map_err(Error::AnchorError)
     }
 

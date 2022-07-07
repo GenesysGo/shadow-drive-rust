@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use serde_json::{json, Value};
-use solana_client::rpc_client::RpcClient;
-use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer};
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer, transaction::Transaction};
 
 mod add_storage;
 // mod cancel_delete_file;
@@ -72,7 +72,7 @@ where
     /// ```
     pub fn new<U: ToString>(wallet: T, rpc_url: U) -> Self {
         let rpc_client = RpcClient::new_with_timeout_and_commitment(
-            rpc_url,
+            rpc_url.to_string(),
             Duration::from_secs(120),
             CommitmentConfig::finalized(),
         );
@@ -158,4 +158,10 @@ where
 
         Ok(response)
     }
+}
+
+pub(crate) fn serialize_and_encode(txn: &Transaction) -> ShadowDriveResult<String> {
+    let serialized = bincode::serialize(txn)
+        .map_err(|error| Error::TransactionSerializationFailed(format!("{:?}", error)))?;
+    Ok(base64::encode(serialized))
 }

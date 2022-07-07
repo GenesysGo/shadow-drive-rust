@@ -1,14 +1,12 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
-use shadow_drive_user_staking::instructions::initialize_account::StorageAccountV1;
+use shadow_drive_user_staking::instructions::initialize_account::StorageAccount;
 use shadow_drive_user_staking::instructions::initialize_account::StorageAccountV2;
-use solana_client::rpc_client::serialize_and_encode;
 use solana_sdk::sysvar::rent;
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
-use solana_transaction_status::UiTransactionEncoding;
 use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as TokenProgramID;
 
@@ -16,6 +14,7 @@ use super::ShadowDriveClient;
 use crate::constants::EMISSIONS;
 use crate::constants::UPLOADER;
 use crate::models::storage_acct::StorageAcct;
+use crate::serialize_and_encode;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
     derived_addresses,
@@ -75,7 +74,7 @@ where
     async fn make_storage_immutable_v1(
         &self,
         storage_account_key: &Pubkey,
-        storage_account: StorageAccountV1,
+        storage_account: StorageAccount,
     ) -> ShadowDriveResult<String> {
         let wallet_pubkey = self.wallet.pubkey();
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
@@ -106,7 +105,7 @@ where
 
         let txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
 
-        let txn_encoded = serialize_and_encode(&txn, UiTransactionEncoding::Base64)?;
+        let txn_encoded = serialize_and_encode(&txn)?;
 
         Ok(txn_encoded)
     }
@@ -145,7 +144,7 @@ where
 
         let txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
 
-        let txn_encoded = serialize_and_encode(&txn, UiTransactionEncoding::Base64)?;
+        let txn_encoded = serialize_and_encode(&txn)?;
 
         Ok(txn_encoded)
     }

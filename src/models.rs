@@ -2,7 +2,6 @@ use bytes::Bytes;
 use cryptohelpers::sha256;
 use reqwest::multipart::Part;
 use serde::Deserialize;
-use solana_sdk::pubkey::Pubkey;
 use std::path::Path;
 use tokio::fs::File;
 
@@ -16,7 +15,7 @@ pub use shadow_drive_user_staking::instructions::{
 pub mod payload;
 pub mod storage_acct;
 
-use crate::error::{Error, FileError};
+use crate::error::Error;
 use payload::Payload;
 
 pub type ShadowDriveResult<T> = Result<T, Error>;
@@ -81,13 +80,6 @@ impl ShadowFile {
             content_type,
             data: Payload::Bytes(data.into()),
         }
-    }
-
-    pub async fn prepare_upload(
-        self,
-        storage_account_key: &Pubkey,
-    ) -> Result<UploadingData, Vec<FileError>> {
-        Payload::prepare_upload(self.data, storage_account_key, self.name).await
     }
 
     pub async fn into_form_part(self) -> ShadowDriveResult<Part> {

@@ -1,8 +1,8 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
-use shadow_drive_user_staking::instructions::initialize_account::StorageAccountV2;
 use shadow_drive_user_staking::{
-    accounts as shdw_drive_accounts, instructions::initialize_account::StorageAccountV1,
+    accounts as shdw_drive_accounts,
+    instructions::initialize_account::{StorageAccount, StorageAccountV2},
 };
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
@@ -62,7 +62,7 @@ where
             }
         };
 
-        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
+        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn).await?;
 
         Ok(ShdwDriveResponse {
             txid: txn_result.to_string(),
@@ -72,7 +72,7 @@ where
     async fn claim_stake_v1(
         &self,
         storage_account_key: &Pubkey,
-        storage_account: StorageAccountV1,
+        storage_account: StorageAccount,
     ) -> ShadowDriveResult<Transaction> {
         let wallet_pubkey = self.wallet.pubkey();
         let unstake_account = unstake_account(storage_account_key).0;
@@ -103,7 +103,7 @@ where
             &[instruction],
             Some(&wallet_pubkey),
             &[&self.wallet],
-            self.rpc_client.get_latest_blockhash()?,
+            self.rpc_client.get_latest_blockhash().await?,
         );
 
         Ok(txn)
@@ -143,7 +143,7 @@ where
             &[instruction],
             Some(&wallet_pubkey),
             &[&self.wallet],
-            self.rpc_client.get_latest_blockhash()?,
+            self.rpc_client.get_latest_blockhash().await?,
         );
 
         Ok(txn)
