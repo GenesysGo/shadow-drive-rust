@@ -2,8 +2,6 @@ use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use byte_unit::Byte;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
-use shadow_drive_user_staking::instructions::initialize_account::StorageAccount;
-use shadow_drive_user_staking::instructions::initialize_account::StorageAccountV2;
 use solana_sdk::sysvar::rent;
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
@@ -12,15 +10,15 @@ use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as TokenProgramID;
 
 use super::ShadowDriveClient;
-use crate::constants::EMISSIONS;
-use crate::constants::UPLOADER;
-use crate::models::storage_acct::StorageAcct;
-use crate::serialize_and_encode;
 use crate::{
-    constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
+    constants::{EMISSIONS, PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT, UPLOADER},
     derived_addresses,
     error::Error,
-    models::*,
+    models::{
+        storage_acct::{StorageAccount, StorageAccountV2, StorageAcct},
+        *,
+    },
+    serialize_and_encode,
 };
 
 impl<T> ShadowDriveClient<T>

@@ -18,22 +18,18 @@ async fn main() {
     //create shdw drive client
     let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
 
-    get_storage_accounts_test(shdw_drive_client, &storage_account_key).await
+    get_storage_accounts_test(shdw_drive_client, &pubkey).await
 }
 
 async fn get_storage_accounts_test<T: Signer + Send + Sync>(
     shdw_drive_client: ShadowDriveClient<T>,
     pubkey: &Pubkey,
 ) {
-    let storage_account = shdw_drive_client
-        .get_storage_account(pubkey)
+    let storage_accounts = shdw_drive_client
+        .get_storage_accounts(pubkey)
         .await
         .expect("failed to get storage account");
-    println!(
-        "identifier: {:?}; immutable: {:?}",
-        storage_account.get_identifier(),
-        storage_account.check_immutable()
-    );
+    println!("{:?}", storage_accounts);
 }
 
 // async fn list_objects_test<T: Signer + Send + Sync>(

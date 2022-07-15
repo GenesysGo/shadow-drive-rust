@@ -1,18 +1,15 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
+use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
-use shadow_drive_user_staking::{
-    accounts as shdw_drive_accounts,
-    instructions::initialize_account::{StorageAccount, StorageAccountV2},
-};
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 
 use super::ShadowDriveClient;
-use crate::models::storage_acct::StorageAcct;
-use crate::{
-    constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
-    models::*,
+use crate::constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT};
+use crate::models::{
+    storage_acct::{StorageAccount, StorageAccountV2, StorageAcct},
+    ShadowDriveResult, ShdwDriveResponse,
 };
 
 impl<T> ShadowDriveClient<T>
