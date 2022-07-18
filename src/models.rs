@@ -13,7 +13,7 @@ pub use shadow_drive_user_staking::instructions::{
 pub mod payload;
 pub mod storage_acct;
 
-use crate::error::Error;
+use crate::{constants::FILE_SIZE_LIMIT, error::Error};
 use payload::Payload;
 
 pub type ShadowDriveResult<T> = Result<T, Error>;
@@ -80,28 +80,41 @@ impl ShadowFile {
         }
     }
 
-    pub async fn into_form_part(self) -> ShadowDriveResult<Part> {
+    pub(crate) async fn into_form_part(self) -> ShadowDriveResult<Part> {
         match self.data {
             Payload::File(path) => {
                 let file = File::open(path).await.map_err(Error::FileSystemError)?;
                 let file_meta = file.metadata().await.map_err(Error::FileSystemError)?;
+
+                //make sure that the file is under the size limit
+                if file_meta.len() > FILE_SIZE_LIMIT {
+                    return Err(Error::FileTooLarge(self.name.clone()));
+                }
+
                 Ok(Part::stream_with_length(file, file_meta.len())
                     .file_name(self.name)
                     .mime_str(&self.content_type)?)
             }
-            Payload::Bytes(data) => Ok(Part::stream_with_length(
-                Bytes::clone(&data),
-                data.len() as u64,
-            )
-            .file_name(self.name)
-            .mime_str(&self.content_type)?),
+            Payload::Bytes(data) => {
+                //make sure that the file is under the size limit
+                if data.len() as u64 > FILE_SIZE_LIMIT {
+                    return Err(Error::FileTooLarge(self.name.clone()));
+                }
+
+                Ok(
+                    Part::stream_with_length(Bytes::clone(&data), data.len() as u64)
+                        .file_name(self.name)
+                        .mime_str(&self.content_type)?,
+                )
+            }
         }
     }
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ShadowUploadResponse {
-    pub finalized_locations: String,
+    #[serde(default)]
+    pub finalized_locations: Vec<String>,
     pub message: String,
     #[serde(default)]
     pub upload_errors: Vec<UploadError>,

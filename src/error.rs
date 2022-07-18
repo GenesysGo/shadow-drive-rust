@@ -12,6 +12,7 @@ pub enum Error {
         status: u16,
         message: serde_json::Value,
     },
+    FileTooLarge(String),
     TransactionSerializationFailed(String),
     InvalidJson(serde_json::Error),
     SolanaRpcError(ClientError),

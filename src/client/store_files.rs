@@ -18,7 +18,6 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer + Send + Sync,
 {
-    //TODO: Enforce file size limits
     pub async fn store_files(
         &self,
         storage_account_key: &Pubkey,
