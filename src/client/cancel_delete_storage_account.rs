@@ -1,15 +1,21 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
-use shadow_drive_user_staking::accounts as shdw_drive_accounts;
-use shadow_drive_user_staking::instruction::UnmarkDeleteAccount;
+use shadow_drive_user_staking::{
+    accounts as shdw_drive_accounts,
+    instruction::{UnmarkDeleteAccount, UnmarkDeleteAccount2},
+};
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 
 use super::ShadowDriveClient;
+use crate::models::storage_acct::StorageAcct;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
-    derived_addresses::stake_account,
-    models::*,
+    derived_addresses,
+    models::{
+        storage_acct::{StorageAccount, StorageAccountV2},
+        *,
+    },
 };
 
 impl<T> ShadowDriveClient<T>
@@ -44,17 +50,38 @@ where
         &self,
         storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
-        let wallet = &self.wallet;
-        let wallet_pubkey = wallet.pubkey();
-
         let selected_account = self.get_storage_account(storage_account_key).await?;
-        let stake_account = stake_account(&storage_account_key).0;
 
-        let accounts = shdw_drive_accounts::UnmarkDeleteAccount {
+        let txn = match selected_account {
+            StorageAcct::V1(v1) => {
+                self.cancel_delete_storage_account_v1(storage_account_key, v1)
+                    .await?
+            }
+            StorageAcct::V2(v2) => {
+                self.cancel_delete_storage_account_v2(storage_account_key, v2)
+                    .await?
+            }
+        };
+
+        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn).await?;
+
+        Ok(ShdwDriveResponse {
+            txid: txn_result.to_string(),
+        })
+    }
+
+    async fn cancel_delete_storage_account_v1(
+        &self,
+        storage_account_key: &Pubkey,
+        storage_account: StorageAccount,
+    ) -> ShadowDriveResult<Transaction> {
+        let (stake_account, _) = derived_addresses::stake_account(storage_account_key);
+
+        let accounts = shdw_drive_accounts::UnmarkDeleteAccountV1 {
             storage_config: *STORAGE_CONFIG_PDA,
             storage_account: *storage_account_key,
             stake_account,
-            owner: selected_account.owner_1,
+            owner: storage_account.owner_1,
             token_mint: TOKEN_MINT,
             system_program: system_program::ID,
         };
@@ -69,15 +96,45 @@ where
 
         let txn = Transaction::new_signed_with_payer(
             &[instruction],
-            Some(&wallet_pubkey),
+            Some(&self.wallet.pubkey()),
             &[&self.wallet],
-            self.rpc_client.get_latest_blockhash()?,
+            self.rpc_client.get_latest_blockhash().await?,
         );
 
-        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
+        Ok(txn)
+    }
 
-        Ok(ShdwDriveResponse {
-            txid: txn_result.to_string(),
-        })
+    async fn cancel_delete_storage_account_v2(
+        &self,
+        storage_account_key: &Pubkey,
+        storage_account: StorageAccountV2,
+    ) -> ShadowDriveResult<Transaction> {
+        let (stake_account, _) = derived_addresses::stake_account(storage_account_key);
+
+        let accounts = shdw_drive_accounts::UnmarkDeleteAccountV2 {
+            storage_config: *STORAGE_CONFIG_PDA,
+            storage_account: *storage_account_key,
+            stake_account,
+            owner: storage_account.owner_1,
+            token_mint: TOKEN_MINT,
+            system_program: system_program::ID,
+        };
+
+        let args = UnmarkDeleteAccount2 {};
+
+        let instruction = Instruction {
+            program_id: PROGRAM_ADDRESS,
+            accounts: accounts.to_account_metas(None),
+            data: args.data(),
+        };
+
+        let txn = Transaction::new_signed_with_payer(
+            &[instruction],
+            Some(&self.wallet.pubkey()),
+            &[&self.wallet],
+            self.rpc_client.get_latest_blockhash().await?,
+        );
+
+        Ok(txn)
     }
 }

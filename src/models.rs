@@ -66,10 +66,15 @@ impl ShadowFile {
                 let mut file = File::open(path).await.map_err(Error::FileSystemError)?;
                 let mut buf = [0u8; BUFFER_SIZE];
                 let mut hasher = Sha256::new();
-                let mut bytes_read: usize;
 
-                while (bytes_read = file.read(&mut buf[..]).await?, bytes_read != 0).1 {
-                    hasher.update(&buf[..bytes_read]);
+                loop {
+                    let bytes_read = file.read(&mut buf[..]).await?;
+
+                    if bytes_read != 0 {
+                        hasher.update(&buf[..bytes_read]);
+                    } else {
+                        break;
+                    }
                 }
 
                 hasher.finalize()
