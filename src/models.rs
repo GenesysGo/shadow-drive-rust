@@ -1,9 +1,9 @@
 use bytes::Bytes;
-use cryptohelpers::sha256;
 use reqwest::multipart::Part;
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use std::path::Path;
-use tokio::fs::File;
+use tokio::{fs::File, io::AsyncReadExt};
 
 //re-export structs from Shadow Drive Smart Contract that are used in the SDK
 pub use shadow_drive_user_staking::instructions::{
@@ -17,6 +17,9 @@ use crate::{constants::FILE_SIZE_LIMIT, error::Error};
 use payload::Payload;
 
 pub type ShadowDriveResult<T> = Result<T, Error>;
+
+const BUFFER_SIZE: usize = 4096;
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct ShdwDriveResponse {
     pub txid: String,
@@ -26,29 +29,6 @@ pub struct ShdwDriveResponse {
 pub struct CreateStorageAccountResponse {
     pub shdw_bucket: Option<String>,
     pub transaction_signature: String,
-}
-
-/// UploadingData is a collection of info required for uploading a file
-/// to Shadow Drive. Fields are generally derived from a given [`ShadowFile`] during the upload process.
-#[derive(Debug)]
-pub struct UploadingData {
-    pub size: u64,
-    pub sha256_hash: sha256::Sha256Hash,
-    pub url: String,
-    pub file: ShadowFile,
-}
-
-impl UploadingData {
-    pub async fn to_form_part(&self) -> ShadowDriveResult<Part> {
-        match &self.file.data {
-            Payload::File(path) => {
-                let file = File::open(path).await.map_err(Error::FileSystemError)?;
-                Ok(Part::stream_with_length(file, self.size).file_name(self.file.name.clone()))
-            }
-            Payload::Bytes(data) => Ok(Part::stream_with_length(Bytes::clone(data), self.size)
-                .file_name(self.file.name.clone())),
-        }
-    }
 }
 
 /// [`ShadowFile`] is the combination of a file name and a [`Payload`].
@@ -78,6 +58,29 @@ impl ShadowFile {
             content_type,
             data: Payload::Bytes(data.into()),
         }
+    }
+
+    pub(crate) async fn sha256(&self) -> ShadowDriveResult<String> {
+        let result = match &self.data {
+            Payload::File(path) => {
+                let mut file = File::open(path).await.map_err(Error::FileSystemError)?;
+                let mut buf = [0u8; BUFFER_SIZE];
+                let mut hasher = Sha256::new();
+                let mut bytes_read: usize;
+
+                while (bytes_read = file.read(&mut buf[..]).await?, bytes_read != 0).1 {
+                    hasher.update(&buf[..bytes_read]);
+                }
+
+                hasher.finalize()
+            }
+            Payload::Bytes(data) => {
+                let mut hasher = Sha256::new();
+                hasher.update(&data);
+                hasher.finalize()
+            }
+        };
+        Ok(hex::encode(result))
     }
 
     pub(crate) async fn into_form_part(self) -> ShadowDriveResult<Part> {

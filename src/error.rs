@@ -70,3 +70,9 @@ impl From<ParsePubkeyError> for Error {
         Self::ParsePubkeyError(parse_pubkey_error)
     }
 }
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Self::FileSystemError(e)
+    }
+}

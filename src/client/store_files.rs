@@ -1,7 +1,7 @@
-use cryptohelpers::sha256;
 use itertools::Itertools;
 use reqwest::multipart::{Form, Part};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
 use super::ShadowDriveClient;
@@ -24,12 +24,12 @@ where
         data: Vec<ShadowFile>,
     ) -> ShadowDriveResult<ShadowUploadResponse> {
         let filenames = data.iter().map(ShadowFile::name).join(",");
-        let filename_hash = sha256::compute_slice(&filenames);
 
-        let message_to_sign = upload_message(
-            storage_account_key,
-            &hex::encode(filename_hash.into_bytes()),
-        );
+        let mut hasher = Sha256::new();
+        hasher.update(&filenames);
+        let filename_hash = hasher.finalize();
+
+        let message_to_sign = upload_message(storage_account_key, &hex::encode(filename_hash));
         //Signature implements Display as a base58 encoded string
         let signature = self
             .wallet
