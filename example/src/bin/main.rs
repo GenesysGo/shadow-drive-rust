@@ -159,11 +159,7 @@ async fn upload_file_test<T: Signer + Send + Sync>(
     let upload_reponse = shdw_drive_client
         .store_files(
             storage_account_key,
-            vec![ShadowFile::file(
-                String::from("example.png"),
-                String::from("image/png"),
-                "example.png",
-            )],
+            vec![ShadowFile::file(String::from("example.png"), "example.png")],
         )
         .await
         .expect("failed to upload file");

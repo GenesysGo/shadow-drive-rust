@@ -36,7 +36,7 @@ pub struct CreateStorageAccountResponse {
 pub struct ShadowFile {
     pub name: String,
     pub data: Payload,
-    pub content_type: String,
+    content_type: Option<String>,
 }
 
 impl ShadowFile {
@@ -44,18 +44,23 @@ impl ShadowFile {
         &self.name
     }
 
-    pub fn file<T: AsRef<Path>>(name: String, content_type: String, path: T) -> Self {
+    pub fn with_content_type(mut self, content_type: String) -> Self {
+        self.content_type = Some(content_type);
+        self
+    }
+
+    pub fn file<T: AsRef<Path>>(name: String, path: T) -> Self {
         Self {
             name,
-            content_type,
+            content_type: None,
             data: Payload::File(path.as_ref().to_owned()),
         }
     }
 
-    pub fn bytes<T: Into<Bytes>>(name: String, content_type: String, data: T) -> Self {
+    pub fn bytes<T: Into<Bytes>>(name: String, data: T) -> Self {
         Self {
             name,
-            content_type,
+            content_type: None,
             data: Payload::Bytes(data.into()),
         }
     }
@@ -89,7 +94,7 @@ impl ShadowFile {
     }
 
     pub(crate) async fn into_form_part(self) -> ShadowDriveResult<Part> {
-        match self.data {
+        let mut part = match self.data {
             Payload::File(path) => {
                 let file = File::open(path).await.map_err(Error::FileSystemError)?;
                 let file_meta = file.metadata().await.map_err(Error::FileSystemError)?;
@@ -99,9 +104,7 @@ impl ShadowFile {
                     return Err(Error::FileTooLarge(self.name.clone()));
                 }
 
-                Ok(Part::stream_with_length(file, file_meta.len())
-                    .file_name(self.name)
-                    .mime_str(&self.content_type)?)
+                Part::stream_with_length(file, file_meta.len()).file_name(self.name)
             }
             Payload::Bytes(data) => {
                 //make sure that the file is under the size limit
@@ -109,13 +112,15 @@ impl ShadowFile {
                     return Err(Error::FileTooLarge(self.name.clone()));
                 }
 
-                Ok(
-                    Part::stream_with_length(Bytes::clone(&data), data.len() as u64)
-                        .file_name(self.name)
-                        .mime_str(&self.content_type)?,
-                )
+                Part::stream_with_length(Bytes::clone(&data), data.len() as u64)
+                    .file_name(self.name)
             }
-        }
+        };
+
+        if let Some(content_type) = self.content_type {
+            part = part.mime_str(&content_type)?;
+        };
+        Ok(part)
     }
 }
 
