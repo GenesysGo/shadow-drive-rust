@@ -1,6 +1,9 @@
 use byte_unit::Byte;
-use shadow_drive_rust::{models::ShadowFile, ShadowDriveClient, StorageAccount};
+use shadow_drive_rust::{
+    models::ShadowFile, ShadowDriveClient, StorageAccount, StorageAccountVersion,
+};
 use solana_sdk::{
+    pubkey,
     pubkey::Pubkey,
     signer::{keypair::read_keypair_file, Signer},
 };
@@ -11,14 +14,19 @@ const KEYPAIR_PATH: &str = "keypair.json";
 async fn main() {
     //load keypair from file
     let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
-    let pubkey = keypair.pubkey();
-    let (storage_account_key, _) =
-        shadow_drive_rust::derived_addresses::storage_account(&pubkey, 0);
+    // let pubkey = keypair.pubkey();
+    // let (storage_account_key, _) =
+    //     shadow_drive_rust::derived_addresses::storage_account(&pubkey, 0);
+
+    let storage_account_key = pubkey!("G6nE9EbNgSDcvUvs67enP2Jba3exgLyStgsg8S7n9StS");
 
     //create shdw drive client
     let shdw_drive_client = ShadowDriveClient::new(keypair, "https://ssc-dao.genesysgo.net");
 
-    get_storage_accounts_test(shdw_drive_client, &pubkey).await
+    // get_storage_accounts_test(shdw_drive_client, &pubkey).await
+
+    // create_storage_account_v2_test(shdw_drive_client).await
+    upload_file_test(shdw_drive_client, &storage_account_key).await
 }
 
 async fn get_storage_accounts_test<T: Signer + Send + Sync>(
@@ -30,6 +38,20 @@ async fn get_storage_accounts_test<T: Signer + Send + Sync>(
         .await
         .expect("failed to get storage account");
     println!("{:?}", storage_accounts);
+}
+
+async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
+    shdw_drive_client: ShadowDriveClient<T>,
+) {
+    let result = shdw_drive_client
+        .create_storage_account(
+            "shdw-drive-1.5-test",
+            Byte::from_str("10MB").expect("invalid byte string"),
+            StorageAccountVersion::v2(),
+        )
+        .await
+        .expect("error creating storage account");
+    println!("{:?}", result);
 }
 
 // async fn list_objects_test<T: Signer + Send + Sync>(
@@ -130,17 +152,21 @@ async fn get_storage_accounts_test<T: Signer + Send + Sync>(
 //     println!("new size: {:?}", storage_account.storage);
 // }
 
-// async fn upload_file_test<T: Signer + Send + Sync>(
-//     shdw_drive_client: ShadowDriveClient<T>,
-//     storage_account_key: &Pubkey,
-// ) {
-//     let upload_reponse = shdw_drive_client
-//         .upload_file(
-//             storage_account_key,
-//             ShadowFile::file(String::from("example.png"), "example.png"),
-//         )
-//         .await
-//         .expect("failed to upload file");
+async fn upload_file_test<T: Signer + Send + Sync>(
+    shdw_drive_client: ShadowDriveClient<T>,
+    storage_account_key: &Pubkey,
+) {
+    let upload_reponse = shdw_drive_client
+        .store_files(
+            storage_account_key,
+            vec![ShadowFile::file(
+                String::from("example.png"),
+                String::from("image/png"),
+                "example.png",
+            )],
+        )
+        .await
+        .expect("failed to upload file");
 
-//     println!("Upload complete {:?}", upload_reponse);
-// }
+    println!("Upload complete {:?}", upload_reponse);
+}

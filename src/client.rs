@@ -7,7 +7,7 @@ use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer, transactio
 mod add_storage;
 mod cancel_delete_storage_account;
 mod claim_stake;
-// mod create_storage_account;
+mod create_storage_account;
 mod delete_file;
 mod delete_storage_account;
 mod edit_file;
@@ -21,7 +21,7 @@ mod store_files;
 pub use add_storage::*;
 pub use cancel_delete_storage_account::*;
 pub use claim_stake::*;
-// pub use create_storage_account::*;
+pub use create_storage_account::*;
 pub use delete_file::*;
 pub use delete_storage_account::*;
 pub use edit_file::*;
@@ -105,7 +105,7 @@ where
         }
     }
 
-    async fn get_object_data(&self, location: &str) -> ShadowDriveResult<FileDataResponse> {
+    pub async fn get_object_data(&self, location: &str) -> ShadowDriveResult<FileDataResponse> {
         let response = self
             .http_client
             .post(format!("{}/get-object-data", SHDW_DRIVE_ENDPOINT))
