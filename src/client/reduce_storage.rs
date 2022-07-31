@@ -59,7 +59,7 @@ where
         &self,
         storage_account_key: &Pubkey,
         size: Byte,
-    ) -> ShadowDriveResult<ShdwDriveResponse> {
+    ) -> ShadowDriveResult<StorageResponse> {
         let size_as_bytes: u64 = size
             .get_bytes()
             .try_into()
@@ -78,7 +78,8 @@ where
             }
         };
 
-        self.send_shdw_txn("reduce-storage", txn_encoded).await
+        self.send_shdw_txn::<StorageResponse>("reduce-storage", txn_encoded)
+            .await
     }
 
     async fn reduce_storage_v1(

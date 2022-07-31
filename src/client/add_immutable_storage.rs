@@ -36,13 +36,29 @@ where
     /// # Example
     ///
     /// ```
-    /// code goes here
+    /// # use shadow_drive_rust::{ShadowDriveClient, derived_addresses::storage_account};
+    /// # use solana_client::rpc_client::RpcClient;
+    /// # use solana_sdk::{
+    /// # pubkey::Pubkey,
+    /// # signature::Keypair,
+    /// # signer::{keypair::read_keypair_file, Signer},
+    /// # };
+    /// #
+    /// # let keypair = read_keypair_file(KEYPAIR_PATH).expect("failed to load keypair at path");
+    /// # let user_pubkey = keypair.pubkey();
+    /// # let rpc_client = RpcClient::new("https://ssc-dao.genesysgo.net");
+    /// # let shdw_drive_client = ShadowDriveClient::new(keypair, rpc_client);
+    /// # let (storage_account_key, _) = storage_account(&user_pubkey, 0);
+    /// #
+    /// let add_immutable_storage_response = shdw_drive_client
+    ///     .add_immutable_storage(storage_account_key, Byte::from_str("1MB").expect("invalid byte string"))
+    ///     .await?;
     /// ```
     pub async fn add_immutable_storage(
         &self,
         storage_account_key: &Pubkey,
         size: Byte,
-    ) -> ShadowDriveResult<AddStorageResponse> {
+    ) -> ShadowDriveResult<StorageResponse> {
         let size_as_bytes: u64 = size
             .get_bytes()
             .try_into()
@@ -77,28 +93,20 @@ where
             StorageAcct::V1(storage_account) => {
                 if !storage_account.immutable {
                     return Err(Error::StorageAccountIsNotImmutable);
-            }
-                self.add_immutable_storage_v1(
-                    storage_account_key,
-                    storage_account,
-                    size_as_bytes,
-                )
-                .await?
+                }
+                self.add_immutable_storage_v1(storage_account_key, storage_account, size_as_bytes)
+                    .await?
             }
             StorageAcct::V2(storage_account) => {
                 if !storage_account.immutable {
                     return Err(Error::StorageAccountIsNotImmutable);
-            }
-                self.add_immutable_storage_v2(
-                    storage_account_key,
-                    storage_account,
-                    size_as_bytes,
-                )
-                .await?
+                }
+                self.add_immutable_storage_v2(storage_account_key, storage_account, size_as_bytes)
+                    .await?
             }
         };
 
-        self.send_shdw_txn("add-storage", txn_encoded)
+        self.send_shdw_txn::<StorageResponse>("add-storage", txn_encoded)
             .await
     }
 
@@ -188,6 +196,4 @@ where
 
         Ok(txn_encoded)
     }
-
-    
 }

@@ -14,7 +14,7 @@ use crate::{
     derived_addresses,
     models::{
         storage_acct::{StorageAccount, StorageAccountV2, StorageAcct},
-        ShadowDriveResult, AddStorageResponse,
+        ShadowDriveResult, StorageResponse,
     },
     serialize_and_encode,
 };
@@ -52,7 +52,7 @@ where
     pub async fn make_storage_immutable(
         &self,
         storage_account_key: &Pubkey,
-    ) -> ShadowDriveResult<AddStorageResponse> {
+    ) -> ShadowDriveResult<StorageResponse> {
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
 
         let txn_encoded = match selected_storage_acct {
@@ -66,7 +66,8 @@ where
             }
         };
 
-        self.send_shdw_txn::<AddStorageResponse>("make-immutable", txn_encoded).await
+        self.send_shdw_txn::<StorageResponse>("make-immutable", txn_encoded)
+            .await
     }
 
     async fn make_storage_immutable_v1(

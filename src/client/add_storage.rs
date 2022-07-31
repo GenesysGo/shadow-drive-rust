@@ -60,7 +60,7 @@ where
         &self,
         storage_account_key: &Pubkey,
         size: Byte,
-    ) -> ShadowDriveResult<ShdwDriveResponse> {
+    ) -> ShadowDriveResult<StorageResponse> {
         let size_as_bytes: u64 = size
             .get_bytes()
             .try_into()
@@ -102,7 +102,8 @@ where
             }
         };
 
-        self.send_shdw_txn("add-storage", txn_encoded).await
+        self.send_shdw_txn::<StorageResponse>("add-storage", txn_encoded)
+            .await
     }
 
     async fn add_storage_v1(

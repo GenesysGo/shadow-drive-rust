@@ -26,7 +26,7 @@ pub struct ShdwDriveResponse {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct AddStorageResponse {
+pub struct StorageResponse {
     pub message: String,
     pub transaction_signature: String,
     pub error: Option<String>,
