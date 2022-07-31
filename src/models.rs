@@ -26,6 +26,13 @@ pub struct ShdwDriveResponse {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct AddStorageResponse {
+    pub message: String,
+    pub transaction_signature: String,
+    pub error: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct CreateStorageAccountResponse {
     pub shdw_bucket: Option<String>,
     pub transaction_signature: String,

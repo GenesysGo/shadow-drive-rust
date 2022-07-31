@@ -14,7 +14,7 @@ use crate::{
     derived_addresses,
     models::{
         storage_acct::{StorageAccount, StorageAccountV2, StorageAcct},
-        ShadowDriveResult, ShdwDriveResponse,
+        ShadowDriveResult, AddStorageResponse,
     },
     serialize_and_encode,
 };
@@ -52,7 +52,7 @@ where
     pub async fn make_storage_immutable(
         &self,
         storage_account_key: &Pubkey,
-    ) -> ShadowDriveResult<ShdwDriveResponse> {
+    ) -> ShadowDriveResult<AddStorageResponse> {
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
 
         let txn_encoded = match selected_storage_acct {
@@ -66,7 +66,7 @@ where
             }
         };
 
-        self.send_shdw_txn("make-immutable", txn_encoded).await
+        self.send_shdw_txn::<AddStorageResponse>("make-immutable", txn_encoded).await
     }
 
     async fn make_storage_immutable_v1(
@@ -76,7 +76,7 @@ where
     ) -> ShadowDriveResult<String> {
         let wallet_pubkey = self.wallet.pubkey();
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
-        let emeissions_ata = get_associated_token_address(&EMISSIONS, &TOKEN_MINT);
+        let emissions_ata = get_associated_token_address(&EMISSIONS, &TOKEN_MINT);
         let (stake_account, _) = derived_addresses::stake_account(storage_account_key);
 
         let accounts = shdw_drive_accounts::MakeAccountImmutableV1 {
@@ -86,13 +86,14 @@ where
             uploader: UPLOADER,
             owner_ata,
             stake_account,
-            emissions_wallet: emeissions_ata,
+            emissions_wallet: emissions_ata,
             token_mint: TOKEN_MINT,
             system_program: system_program::ID,
             token_program: TokenProgramID,
             associated_token_program: spl_associated_token_account::ID,
             rent: rent::ID,
         };
+
         let args = shdw_drive_instructions::MakeAccountImmutable {};
 
         let instruction = Instruction {
@@ -101,7 +102,12 @@ where
             data: args.data(),
         };
 
-        let txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
+        let mut txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
+
+        txn.try_partial_sign(
+            &[&self.wallet],
+            self.rpc_client.get_latest_blockhash().await?,
+        )?;
 
         let txn_encoded = serialize_and_encode(&txn)?;
 
@@ -115,7 +121,7 @@ where
     ) -> ShadowDriveResult<String> {
         let wallet_pubkey = self.wallet.pubkey();
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
-        let emeissions_ata = get_associated_token_address(&EMISSIONS, &TOKEN_MINT);
+        let emissions_ata = get_associated_token_address(&EMISSIONS, &TOKEN_MINT);
         let (stake_account, _) = derived_addresses::stake_account(storage_account_key);
 
         let accounts = shdw_drive_accounts::MakeAccountImmutableV2 {
@@ -125,7 +131,7 @@ where
             uploader: UPLOADER,
             owner_ata,
             stake_account,
-            emissions_wallet: emeissions_ata,
+            emissions_wallet: emissions_ata,
             token_mint: TOKEN_MINT,
             system_program: system_program::ID,
             token_program: TokenProgramID,
@@ -140,7 +146,12 @@ where
             data: args.data(),
         };
 
-        let txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
+        let mut txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
+
+        txn.try_partial_sign(
+            &[&self.wallet],
+            self.rpc_client.get_latest_blockhash().await?,
+        )?;
 
         let txn_encoded = serialize_and_encode(&txn)?;
 

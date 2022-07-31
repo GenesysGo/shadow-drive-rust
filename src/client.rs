@@ -5,6 +5,7 @@ use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer, transaction::Transaction};
 
 mod add_storage;
+mod add_immutable_storage;
 mod cancel_delete_storage_account;
 mod claim_stake;
 mod create_storage_account;
@@ -19,6 +20,7 @@ mod store_files;
 // mod upload_multiple_files;
 
 pub use add_storage::*;
+pub use add_immutable_storage::*;
 pub use cancel_delete_storage_account::*;
 pub use claim_stake::*;
 pub use create_storage_account::*;
