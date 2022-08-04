@@ -1,9 +1,11 @@
+use serde::de::DeserializeOwned;
 use std::time::Duration;
 
 use serde_json::{json, Value};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer, transaction::Transaction};
 
+mod add_immutable_storage;
 mod add_storage;
 mod cancel_delete_storage_account;
 mod claim_stake;
@@ -18,6 +20,7 @@ mod reduce_storage;
 mod store_files;
 // mod upload_multiple_files;
 
+pub use add_immutable_storage::*;
 pub use add_storage::*;
 pub use cancel_delete_storage_account::*;
 pub use claim_stake::*;
@@ -34,7 +37,7 @@ pub use store_files::*;
 use crate::{
     constants::SHDW_DRIVE_ENDPOINT,
     error::Error,
-    models::{FileDataResponse, ShadowDriveResult, ShdwDriveResponse},
+    models::{FileDataResponse, ShadowDriveResult},
 };
 
 /// Client that allows a user to interact with the Shadow Drive.
@@ -126,11 +129,11 @@ where
         Ok(response)
     }
 
-    async fn send_shdw_txn(
+    async fn send_shdw_txn<K: DeserializeOwned>(
         &self,
         uri: &str,
         txn_encoded: String,
-    ) -> ShadowDriveResult<ShdwDriveResponse> {
+    ) -> ShadowDriveResult<K> {
         let body = serde_json::to_string(&json!({
            "transaction": txn_encoded,
            "commitment": "finalized"
@@ -152,7 +155,7 @@ where
             });
         }
 
-        let response = response.json::<ShdwDriveResponse>().await?;
+        let response = response.json::<K>().await?;
 
         Ok(response)
     }

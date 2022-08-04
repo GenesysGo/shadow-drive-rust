@@ -27,6 +27,7 @@ pub enum Error {
     FileSystemError(std::io::Error),
     ParsePubkeyError(ParsePubkeyError),
     NotFileOwner,
+    StorageAccountIsNotImmutable,
 }
 
 #[derive(Debug)]
