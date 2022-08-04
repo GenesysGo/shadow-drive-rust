@@ -64,29 +64,6 @@ where
             .try_into()
             .map_err(|_| Error::InvalidStorage)?;
 
-        let wallet_pubkey = self.wallet.pubkey();
-        let (user_info, _) = derived_addresses::user_info(&wallet_pubkey);
-
-        let user_info_acct = self.rpc_client.get_account(&user_info).await;
-        match user_info_acct {
-            Ok(_) => {
-                // the user_info_acct exists. don't need to verify anything about it as
-                // the txn will fail if self.wallet is not the owner of the storage_account
-            }
-            Err(ClientError {
-                kind: ClientErrorKind::RpcError(RpcError::ForUser(_)),
-                ..
-            }) => {
-                // this is what rpc_client.get_account() returns if the account doesn't exist
-                // If userInfo hasn't been initialized, error out
-                return Err(Error::UserInfoNotCreated);
-            }
-            Err(err) => {
-                //a different rpc error occurred
-                return Err(Error::from(err));
-            }
-        }
-
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
 
         let txn_encoded = match selected_storage_acct {
@@ -106,8 +83,7 @@ where
             }
         };
 
-        self.send_shdw_txn::<StorageResponse>("add-storage", txn_encoded)
-            .await
+        self.send_shdw_txn("add-storage", txn_encoded).await
     }
 
     async fn add_immutable_storage_v1(

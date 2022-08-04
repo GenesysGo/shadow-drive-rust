@@ -78,8 +78,7 @@ where
             }
         };
 
-        self.send_shdw_txn::<StorageResponse>("reduce-storage", txn_encoded)
-            .await
+        self.send_shdw_txn("reduce-storage", txn_encoded).await
     }
 
     async fn reduce_storage_v1(

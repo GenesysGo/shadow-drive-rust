@@ -66,8 +66,7 @@ where
             }
         };
 
-        self.send_shdw_txn::<StorageResponse>("make-immutable", txn_encoded)
-            .await
+        self.send_shdw_txn("make-immutable", txn_encoded).await
     }
 
     async fn make_storage_immutable_v1(
