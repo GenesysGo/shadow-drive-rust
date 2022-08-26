@@ -40,7 +40,7 @@ where
         &self,
         storage_account_key: &Pubkey,
         url: String,
-    ) -> ShadowDriveResult<()> {
+    ) -> ShadowDriveResult<DeleteFileResponse> {
         let message_to_sign = delete_file_message(storage_account_key, &url);
 
         //Signature implements Display as a base58 encoded string
@@ -69,7 +69,9 @@ where
             });
         }
 
-        Ok(())
+        let response = response.json::<DeleteFileResponse>().await?;
+
+        Ok(response)
     }
 }
 
