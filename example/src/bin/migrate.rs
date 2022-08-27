@@ -1,11 +1,9 @@
 use byte_unit::Byte;
 use shadow_drive_rust::{ShadowDriveClient, StorageAccountVersion};
-use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
     commitment_config::CommitmentConfig, pubkey::Pubkey, signer::keypair::read_keypair_file,
 };
 use std::str::FromStr;
-use std::time::Duration;
 
 const KEYPAIR_PATH: &str = "keypair.json";
 
