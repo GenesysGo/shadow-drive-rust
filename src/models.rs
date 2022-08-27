@@ -38,6 +38,12 @@ pub struct CreateStorageAccountResponse {
     pub transaction_signature: String,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct DeleteFileResponse {
+    pub message: String,
+    pub error: Option<String>,
+}
+
 /// [`ShadowFile`] is the combination of a file name and a [`Payload`].
 #[derive(Debug)]
 pub struct ShadowFile {
