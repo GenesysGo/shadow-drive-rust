@@ -54,6 +54,17 @@ async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
     println!("{:?}", result);
 }
 
+// async fn get_object_data_test<T: Signer + Send + Sync>(
+//     shdw_drive_client: ShadowDriveClient<T>,
+//     location: &str,
+// ) {
+//     let result = shdw_drive_client
+//         .get_object_data(location)
+//         .await
+//         .expect("error getting object data");
+//     println!("{:?}", result);
+// }
+
 // async fn list_objects_test<T: Signer + Send + Sync>(
 //     shdw_drive_client: ShadowDriveClient<T>,
 //     storage_account_key: &Pubkey,

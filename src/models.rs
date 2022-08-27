@@ -181,7 +181,6 @@ pub struct FileDataResponse {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct FileData {
-    pub file_account_pubkey: String,
     pub owner_account_pubkey: String,
     pub storage_account_pubkey: String,
 }
