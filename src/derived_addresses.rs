@@ -54,3 +54,10 @@ pub fn unstake_info(storage_account: &Pubkey) -> (Pubkey, u8) {
         &PROGRAM_ADDRESS,
     )
 }
+
+pub fn migration_helper(storage_account: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[&b"migration-helper"[..], &storage_account.to_bytes()],
+        &PROGRAM_ADDRESS,
+    )
+}
