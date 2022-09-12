@@ -12,6 +12,9 @@ pub enum Error {
         status: u16,
         message: serde_json::Value,
     },
+    FileTooLarge(String),
+    TransactionSerializationFailed(String),
+    InvalidJson(serde_json::Error),
     SolanaRpcError(ClientError),
     AccountDeserializeError(IoError),
     InvalidStorage,
@@ -24,6 +27,7 @@ pub enum Error {
     FileSystemError(std::io::Error),
     ParsePubkeyError(ParsePubkeyError),
     NotFileOwner,
+    StorageAccountIsNotImmutable,
 }
 
 #[derive(Debug)]
@@ -65,5 +69,11 @@ impl From<ReqwestError> for Error {
 impl From<ParsePubkeyError> for Error {
     fn from(parse_pubkey_error: ParsePubkeyError) -> Self {
         Self::ParsePubkeyError(parse_pubkey_error)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Self::FileSystemError(e)
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "shadow-drive-rust"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Rust SDK for GenesysGo's Shadow Drive."
 repository = "https://github.com/VegetarianOrc/shadow-drive-rust"
@@ -9,23 +9,27 @@ license = "GPL-3.0-only"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+base64 = "^0.13"
+bincode = "^1.3"
 bytes = "^1"
-cryptohelpers = {version = "^2.0.0", features= ["async", "sha256"]}
+sha2 = "^0.10"
 futures = "^0.3"
 hex = "^0.4"
-solana-client = "^1.9"
-solana-transaction-status = "^1.9"
-solana-account-decoder = "^1.9"
-solana-sdk = "^1.9"
-spl-associated-token-account = "^1"
+itertools = "0.10.3"
+solana-client = "~1.10.29"
+solana-transaction-status = "~1.10.29"
+solana-account-decoder = "~1.10.29"
+solana-sdk = "~1.10.29"
+spl-associated-token-account = "1.0.5"
 spl-token = "^3"
-shadow-drive-user-staking = {version = "0.1.1", features = ["no-entrypoint"]}
-anchor-lang = "^0.24"
+shadow-drive-user-staking = {version = "1.1.1", features = ["no-entrypoint"]}
+anchor-lang = "^0.25"
 async-trait = "^0.1"
 byte-unit = "^4"
 lazy_static = "^1"
 serde = "^1"
 serde_json = "^1"
 reqwest = {version = "^0.11", features = ["multipart", "stream"]}
-tokio = {version = "1.18.2", features = ["rt", "fs", "io-util"]}
+tokio = {version = "^1", features = ["rt", "fs", "io-util"]}
 tracing = "^0.1"
+sodalite = "0.4.0"

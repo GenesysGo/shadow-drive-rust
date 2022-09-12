@@ -1,14 +1,15 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
-use shadow_drive_user_staking::instruction::RequestDeleteAccount;
+use shadow_drive_user_staking::instruction as shdw_drive_instructions;
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 
 use super::ShadowDriveClient;
-use crate::{
-    constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
-    models::*,
+use crate::constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT};
+use crate::models::{
+    storage_acct::{StorageAccount, StorageAccountV2, StorageAcct},
+    ShadowDriveResult, ShdwDriveResponse,
 };
 
 impl<T> ShadowDriveClient<T>
@@ -47,20 +48,39 @@ where
         &self,
         storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<ShdwDriveResponse> {
-        let wallet = &self.wallet;
-        let wallet_pubkey = wallet.pubkey();
-
         let selected_account = self.get_storage_account(storage_account_key).await?;
 
-        let accounts = shdw_drive_accounts::RequestDeleteAccount {
+        let txn = match selected_account {
+            StorageAcct::V1(storage_account) => {
+                self.delete_storage_account_v1(storage_account_key, storage_account)
+                    .await?
+            }
+            StorageAcct::V2(storage_account) => {
+                self.delete_storage_account_v2(storage_account_key, storage_account)
+                    .await?
+            }
+        };
+
+        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn).await?;
+
+        Ok(ShdwDriveResponse {
+            txid: txn_result.to_string(),
+        })
+    }
+
+    async fn delete_storage_account_v1(
+        &self,
+        storage_account_key: &Pubkey,
+        storage_account: StorageAccount,
+    ) -> ShadowDriveResult<Transaction> {
+        let accounts = shdw_drive_accounts::RequestDeleteAccountV1 {
             storage_config: *STORAGE_CONFIG_PDA,
             storage_account: *storage_account_key,
-            owner: selected_account.owner_1,
+            owner: storage_account.owner_1,
             token_mint: TOKEN_MINT,
             system_program: system_program::ID,
         };
-
-        let args = RequestDeleteAccount {};
+        let args = shdw_drive_instructions::RequestDeleteAccount {};
 
         let instruction = Instruction {
             program_id: PROGRAM_ADDRESS,
@@ -70,15 +90,42 @@ where
 
         let txn = Transaction::new_signed_with_payer(
             &[instruction],
-            Some(&wallet_pubkey),
+            Some(&self.wallet.pubkey()),
             &[&self.wallet],
-            self.rpc_client.get_latest_blockhash()?,
+            self.rpc_client.get_latest_blockhash().await?,
         );
 
-        let txn_result = self.rpc_client.send_and_confirm_transaction(&txn)?;
+        Ok(txn)
+    }
 
-        Ok(ShdwDriveResponse {
-            txid: txn_result.to_string(),
-        })
+    async fn delete_storage_account_v2(
+        &self,
+        storage_account_key: &Pubkey,
+        storage_account: StorageAccountV2,
+    ) -> ShadowDriveResult<Transaction> {
+        let accounts = shdw_drive_accounts::RequestDeleteAccountV2 {
+            storage_config: *STORAGE_CONFIG_PDA,
+            storage_account: *storage_account_key,
+            owner: storage_account.owner_1,
+            token_mint: TOKEN_MINT,
+            system_program: system_program::ID,
+        };
+
+        let args = shdw_drive_instructions::RequestDeleteAccount2 {};
+
+        let instruction = Instruction {
+            program_id: PROGRAM_ADDRESS,
+            accounts: accounts.to_account_metas(None),
+            data: args.data(),
+        };
+
+        let txn = Transaction::new_signed_with_payer(
+            &[instruction],
+            Some(&self.wallet.pubkey()),
+            &[&self.wallet],
+            self.rpc_client.get_latest_blockhash().await?,
+        );
+
+        Ok(txn)
     }
 }

@@ -1,14 +1,14 @@
-use anchor_lang::{AccountDeserialize, Discriminator};
-use shadow_drive_user_staking::instructions::initialize_account::StorageAccount;
-use solana_account_decoder::UiAccountEncoding;
-use solana_client::{
-    rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
-    rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
-};
-use solana_sdk::{bs58, pubkey::Pubkey, signer::Signer};
+use anchor_lang::AccountDeserialize;
+use futures::future::join_all;
+use serde_json::json;
+use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
 use super::ShadowDriveClient;
-use crate::{constants::PROGRAM_ADDRESS, error::Error, models::*};
+use crate::{
+    constants::SHDW_DRIVE_ENDPOINT,
+    derived_addresses,
+    models::{storage_acct::StorageAcct, *},
+};
 
 impl<T> ShadowDriveClient<T>
 where
@@ -39,10 +39,19 @@ where
     ///     .await
     ///     .expect("failed to get storage account");
     /// ```
-    pub async fn get_storage_account(&self, key: &Pubkey) -> ShadowDriveResult<StorageAccount> {
-        let account_info = self.rpc_client.get_account(&key)?;
-        StorageAccount::try_deserialize(&mut account_info.data.as_slice())
-            .map_err(Error::AnchorError)
+    pub async fn get_storage_account(&self, key: &Pubkey) -> ShadowDriveResult<StorageAcct> {
+        let response = self
+            .http_client
+            .post(format!("{}/storage-account-info", SHDW_DRIVE_ENDPOINT))
+            .json(&json!({
+                "storage_account": key.to_string()
+            }))
+            .send()
+            .await?
+            .json()
+            .await?;
+
+        Ok(response)
     }
 
     /// Returns all [`StorageAccount`]s associated with the public key provided by a user.
@@ -72,42 +81,29 @@ where
     pub async fn get_storage_accounts(
         &self,
         owner: &Pubkey,
-    ) -> ShadowDriveResult<Vec<StorageAccount>> {
-        let account_type_filter = RpcFilterType::Memcmp(Memcmp {
-            offset: 0,
-            bytes: MemcmpEncodedBytes::Base58(
-                bs58::encode(StorageAccount::discriminator()).into_string(),
-            ),
-            encoding: None,
+    ) -> ShadowDriveResult<Vec<StorageAcct>> {
+        let (user_info_key, _) = derived_addresses::user_info(owner);
+        let user_info = self.rpc_client.get_account_data(&user_info_key).await?;
+        let user_info = UserInfo::try_deserialize(&mut user_info.as_slice())?;
+
+        let accounts_to_fetch = (0..user_info.account_counter - 1)
+            .map(|account_seed| derived_addresses::storage_account(owner, account_seed).0);
+
+        let accounts = accounts_to_fetch.map(|storage_account_key| async move {
+            self.get_storage_account(&storage_account_key).await
         });
 
-        let owner_filter = RpcFilterType::Memcmp(Memcmp {
-            offset: 39,
-            bytes: MemcmpEncodedBytes::Bytes(owner.to_bytes().to_vec()),
-            encoding: None,
-        });
-
-        let get_accounts_config = RpcProgramAccountsConfig {
-            filters: Some(vec![account_type_filter, owner_filter]),
-            account_config: RpcAccountInfoConfig {
-                encoding: Some(UiAccountEncoding::Base64),
-                ..RpcAccountInfoConfig::default()
-            },
-            ..RpcProgramAccountsConfig::default()
-        };
-
-        let accounts = self
-            .rpc_client
-            .get_program_accounts_with_config(&PROGRAM_ADDRESS, get_accounts_config)?;
-
-        let accounts = accounts
+        let (accounts, errors): (
+            Vec<ShadowDriveResult<StorageAcct>>,
+            Vec<ShadowDriveResult<StorageAcct>>,
+        ) = join_all(accounts)
+            .await
             .into_iter()
-            .map(|(_, account)| {
-                StorageAccount::try_deserialize(&mut account.data.as_slice())
-                    .map_err(Error::AnchorError)
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+            .partition(Result::is_ok);
 
-        Ok(accounts)
+        tracing::debug!(?errors, "encountered errors fetching storage_accounts");
+
+        //unwrap is safe due do the abve partition
+        Ok(accounts.into_iter().map(Result::unwrap).collect())
     }
 }
