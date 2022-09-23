@@ -47,7 +47,7 @@ impl StorageAccountVersion {
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Creates a [`StorageAccount`](crate::models::StorageAccount) on the Shadow Drive.
     /// [`StorageAccount`]'s can hold multiple files, and are paid for using the SHDW token.

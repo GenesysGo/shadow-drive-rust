@@ -14,7 +14,7 @@ use crate::models::{
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Marks a [`StorageAccount`](crate::models::StorageAccount) for deletion from the Shadow Drive.
     /// If an account is marked for deletion, all files within the account will be deleted as well.

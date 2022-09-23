@@ -2,10 +2,7 @@ use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use byte_unit::Byte;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
-use solana_client::{
-    client_error::{ClientError, ClientErrorKind},
-    rpc_request::RpcError,
-};
+
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
@@ -17,14 +14,13 @@ use crate::models::storage_acct::{StorageAccount, StorageAccountV2, StorageAcct}
 use crate::serialize_and_encode;
 use crate::{
     constants::{EMISSIONS, PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT, UPLOADER},
-    derived_addresses,
     error::Error,
     models::*,
 };
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Adds storage capacity to the specified immutable [`StorageAccount`](crate::models::StorageAccount).
     /// This will fail if the [`StorageAccount`](crate::models::StorageAccount) is not immutable.

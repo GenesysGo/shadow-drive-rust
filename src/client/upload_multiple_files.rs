@@ -22,7 +22,7 @@ use crate::{
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// upload_multiple_files uploads a vector of [`ShadowFile`](crate::models::ShadowFile)s to Shadow Drive.
     /// The multiple upload process is done in 4 steps:

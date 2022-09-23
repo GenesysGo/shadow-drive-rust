@@ -7,7 +7,7 @@ use crate::{constants::SHDW_DRIVE_ENDPOINT, error::Error, models::*};
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Replace an existing file on the Shadow Drive with the given updated file.
     /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount) that contains the file.

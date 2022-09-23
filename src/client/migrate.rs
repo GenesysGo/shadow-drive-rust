@@ -11,7 +11,7 @@ use crate::{constants::PROGRAM_ADDRESS, derived_addresses, models::*};
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Migrates a v1 [`StorageAccount`](crate::models::StorageAccount) to v2.
     /// This requires two separate transactions to reuse the original pubkey. To minimize chance of failure, it is recommended to call this method with a [commitment level][cl] of [`Finalized`](solana_sdk::commitment_config::CommitmentLevel::Finalized)

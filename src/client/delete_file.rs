@@ -6,7 +6,7 @@ use crate::{constants::SHDW_DRIVE_ENDPOINT, error::Error, models::*};
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Marks a file for deletion from the Shadow Drive.
     /// Files marked for deletion are deleted at the end of each Solana epoch.

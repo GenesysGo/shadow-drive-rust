@@ -12,7 +12,7 @@ use crate::{
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Returns the [`StorageAccount`](crate::models::StorageAccount) associated with the pubkey provided by a user.
     /// * `key` - The public key of the [`StorageAccount`](crate::models::StorageAccount).

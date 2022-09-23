@@ -11,7 +11,7 @@ use crate::{constants::PROGRAM_ADDRESS, models::*};
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Reclaims the Solana rent from any on-chain file accounts. Older versions of the Shadow Drive used to create accounts for uploaded files.
     ///

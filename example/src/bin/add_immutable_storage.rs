@@ -1,10 +1,8 @@
 use byte_unit::Byte;
 use shadow_drive_rust::{
-    models::{storage_acct::StorageAcct, ShadowFile},
-    ShadowDriveClient, StorageAccount, StorageAccountVersion,
+    models::storage_acct::StorageAcct, ShadowDriveClient, StorageAccountVersion,
 };
 use solana_sdk::{
-    pubkey,
     pubkey::Pubkey,
     signer::{keypair::read_keypair_file, Signer},
 };
@@ -35,7 +33,7 @@ async fn main() {
     add_immutable_storage_test(&shdw_drive_client, &v2_pubkey).await;
 }
 
-async fn create_storage_accounts<T: Signer + Send + Sync>(shdw_drive_client: ShadowDriveClient<T>) {
+async fn create_storage_accounts<T: Signer>(shdw_drive_client: ShadowDriveClient<T>) {
     let result_v1 = shdw_drive_client
         .create_storage_account(
             "shdw-drive-1.5-test-v1",
@@ -58,7 +56,7 @@ async fn create_storage_accounts<T: Signer + Send + Sync>(shdw_drive_client: Sha
     println!("v2: {:?}", result_v2);
 }
 
-async fn make_storage_immutable<T: Signer + Send + Sync>(
+async fn make_storage_immutable<T: Signer>(
     shdw_drive_client: &ShadowDriveClient<T>,
     storage_account_key: &Pubkey,
 ) {
@@ -88,7 +86,7 @@ async fn make_storage_immutable<T: Signer + Send + Sync>(
     }
 }
 
-async fn add_immutable_storage_test<T: Signer + Send + Sync>(
+async fn add_immutable_storage_test<T: Signer>(
     shdw_drive_client: &ShadowDriveClient<T>,
     storage_account_key: &Pubkey,
 ) {

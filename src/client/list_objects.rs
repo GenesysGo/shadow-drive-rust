@@ -11,7 +11,7 @@ use super::ShadowDriveClient;
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Gets a list of all files associated with a storage account.
     /// The output contains all of the file names as strings.

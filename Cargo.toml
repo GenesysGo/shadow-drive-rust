@@ -1,6 +1,6 @@
 [package]
 name = "shadow-drive-rust"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 description = "Rust SDK for GenesysGo's Shadow Drive."
 repository = "https://github.com/VegetarianOrc/shadow-drive-rust"
