@@ -21,7 +21,7 @@ use crate::{
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Permanently locks a [`StorageAccount`](crate::models::StorageAccount) and all contained files. After a [`StorageAccount`](crate::models::StorageAccount)
     /// has been locked, a user will no longer be able to delete/edit files, add/reduce storage amount,

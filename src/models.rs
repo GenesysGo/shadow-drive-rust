@@ -153,6 +153,7 @@ pub struct UploadError {
     pub error: String,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct ShdwDriveBatchServerResponse {
     pub _finalized_locations: Option<Vec<String>>,

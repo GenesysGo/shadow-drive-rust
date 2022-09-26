@@ -1,7 +1,5 @@
 use byte_unit::Byte;
-use shadow_drive_rust::{
-    models::ShadowFile, ShadowDriveClient, StorageAccount, StorageAccountVersion,
-};
+use shadow_drive_rust::{models::ShadowFile, ShadowDriveClient, StorageAccountVersion};
 use solana_sdk::{
     pubkey,
     pubkey::Pubkey,
@@ -29,7 +27,7 @@ async fn main() {
     upload_file_test(shdw_drive_client, &storage_account_key).await
 }
 
-async fn get_storage_accounts_test<T: Signer + Send + Sync>(
+async fn get_storage_accounts_test<T: Signer>(
     shdw_drive_client: ShadowDriveClient<T>,
     pubkey: &Pubkey,
 ) {
@@ -40,9 +38,7 @@ async fn get_storage_accounts_test<T: Signer + Send + Sync>(
     println!("{:?}", storage_accounts);
 }
 
-async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
-    shdw_drive_client: ShadowDriveClient<T>,
-) {
+async fn create_storage_account_v2_test<T: Signer>(shdw_drive_client: ShadowDriveClient<T>) {
     let result = shdw_drive_client
         .create_storage_account(
             "shdw-drive-1.5-test",
@@ -54,7 +50,7 @@ async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
     println!("{:?}", result);
 }
 
-// async fn get_object_data_test<T: Signer + Send + Sync>(
+// async fn get_object_data_test<T: Signer>(
 //     shdw_drive_client: ShadowDriveClient<T>,
 //     location: &str,
 // ) {
@@ -65,7 +61,7 @@ async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
 //     println!("{:?}", result);
 // }
 
-// async fn list_objects_test<T: Signer + Send + Sync>(
+// async fn list_objects_test<T: Signer>(
 //     shdw_drive_client: ShadowDriveClient<T>,
 //     storage_account_key: &Pubkey,
 // ) {
@@ -77,7 +73,7 @@ async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
 //     println!("objects {:?}", objects);
 // }
 
-// async fn make_storage_immutable_test<T: Signer + Send + Sync>(
+// async fn make_storage_immutable_test<T: Signer>(
 //     shdw_drive_client: ShadowDriveClient<T>,
 //     storage_account_key: &Pubkey,
 // ) {
@@ -107,7 +103,7 @@ async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
 //     );
 // }
 
-// async fn add_storage_test<T: Signer + Send + Sync>(
+// async fn add_storage_test<T: Signer>(
 //     shdw_drive_client: &ShadowDriveClient<T>,
 //     storage_account_key: &Pubkey,
 // ) {
@@ -134,7 +130,7 @@ async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
 //     println!("new size: {:?}", storage_account.storage);
 // }
 
-// async fn reduce_storage_test<T: Signer + Send + Sync>(
+// async fn reduce_storage_test<T: Signer>(
 //     shdw_drive_client: ShadowDriveClient<T>,
 //     storage_account_key: &Pubkey,
 // ) {
@@ -163,7 +159,7 @@ async fn create_storage_account_v2_test<T: Signer + Send + Sync>(
 //     println!("new size: {:?}", storage_account.storage);
 // }
 
-async fn upload_file_test<T: Signer + Send + Sync>(
+async fn upload_file_test<T: Signer>(
     shdw_drive_client: ShadowDriveClient<T>,
     storage_account_key: &Pubkey,
 ) {

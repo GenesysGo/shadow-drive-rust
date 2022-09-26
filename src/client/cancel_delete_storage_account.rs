@@ -20,7 +20,7 @@ use crate::{
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Unmarks a [`StorageAccount`](crate::models::StorageAccount) for deletion from the Shadow Drive.
     /// To prevent deletion, this method must be called before the end of the Solana epoch in which `delete_storage_account` is called.

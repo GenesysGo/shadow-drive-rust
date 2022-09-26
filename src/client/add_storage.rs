@@ -25,7 +25,7 @@ use crate::{
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Adds storage capacity to the specified [`StorageAccount`](crate::models::StorageAccount).
     /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount).

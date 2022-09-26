@@ -16,7 +16,7 @@ fn upload_message(storage_account_key: &Pubkey, filename_hash: &str) -> String {
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     pub async fn store_files(
         &self,
@@ -61,7 +61,7 @@ where
         if !response.status().is_success() {
             return Err(Error::ShadowDriveServerError {
                 status: response.status().as_u16(),
-                message: response.json::<Value>().await?,
+                message: response.json::<Value>().await.unwrap_or(Value::Null),
             });
         }
 

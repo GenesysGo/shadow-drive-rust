@@ -19,7 +19,7 @@ use spl_token::ID as TokenProgramID;
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Claims any available stake as a result of the `reduce_storage` command.
     /// After reducing storage amount, users must wait until the end of the epoch to successfully claim their stake.

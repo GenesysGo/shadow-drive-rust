@@ -23,7 +23,7 @@ use crate::{
 
 impl<T> ShadowDriveClient<T>
 where
-    T: Signer + Send + Sync,
+    T: Signer,
 {
     /// Reduces the amount of total storage available for the given storage account.
     /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount) whose storage will be reduced.
