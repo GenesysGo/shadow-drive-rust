@@ -86,7 +86,7 @@ where
         let user_info = self.rpc_client.get_account_data(&user_info_key).await?;
         let user_info = UserInfo::try_deserialize(&mut user_info.as_slice())?;
 
-        let accounts_to_fetch = (0..user_info.account_counter - 1)
+        let accounts_to_fetch = (0..user_info.account_counter)
             .map(|account_seed| derived_addresses::storage_account(owner, account_seed).0);
 
         let accounts = accounts_to_fetch.map(|storage_account_key| async move {
