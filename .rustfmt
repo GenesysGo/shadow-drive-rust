@@ -1,1 +1,3 @@
 max_width = 80
+chain_width = 10
+force_multiline_blocks = true
