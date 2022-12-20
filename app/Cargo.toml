@@ -1,0 +1,11 @@
+[package]
+name = "shadow-drive-app"
+description = "The Shadow Drive Desktop App, by GenesysGo"
+version = "0.0.0"
+authors = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

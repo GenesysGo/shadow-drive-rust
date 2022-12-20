@@ -1,0 +1,11 @@
+[package]
+name = "shadow-drive-cli"
+description = "The Rust CLI for GenesysGo's Shadow Drive"
+version = "0.0.0"
+authors = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
