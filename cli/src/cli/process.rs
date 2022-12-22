@@ -1,7 +1,7 @@
 use super::Command;
 use itertools::Itertools;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-use shadow_rpc_auth::genesysgo_auth::{parse_account_id_from_url, sign_in};
+use shadow_rpc_auth::genesysgo_auth::{parse_account_id_from_url, authenticate};
 use shadow_rpc_auth::HttpSenderWithHeaders;
 use shadow_drive_cli::process_shadow_api_response;
 use shadow_drive_cli::wait_for_user_confirmation;
@@ -65,7 +65,7 @@ impl Command {
         match self {
             Command::ShadowRpcAuth => {
                 let account_id = parse_account_id_from_url(url.to_string())?;
-                let resp = sign_in(&signer, &account_id).await?;
+                let resp = authenticate(&signer, &account_id).await?;
                 println!("{:#?}", resp);
             }
             Command::CreateStorageAccount { name, size } => {

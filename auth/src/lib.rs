@@ -3,8 +3,8 @@ pub mod http_sender;
 
 pub use http_sender::HttpSenderWithHeaders;
 pub use genesysgo_auth::{
-    sign_in,
-    sign_in_step_1,
-    sign_in_step_2,
+    authenticate,
+    genesysgo_portal_auth,
+    genesysgo_rpc_auth,
     parse_account_id_from_url,
 };

@@ -4,7 +4,7 @@ use anyhow::anyhow;
 use clap::{IntoApp, Parser};
 use cli::Opts;
 use shadow_drive_cli::WrappedSigner;
-use shadow_rpc_auth::{sign_in, parse_account_id_from_url};
+use shadow_rpc_auth::{authenticate, parse_account_id_from_url};
 use solana_clap_v3_utils::keypair::signer_from_path;
 
 pub const GENESYSGO_AUTH_KEYWORD: &str = "genesysgo";
@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
     let mut auth: Option<String> = opts.cfg_override.auth.clone();
     if opts.cfg_override.auth == Some(GENESYSGO_AUTH_KEYWORD.to_string()) {
         let account_id = parse_account_id_from_url(url.to_string())?;
-        let token = sign_in(&signer, &account_id).await?;
+        let token = authenticate(&signer, &account_id).await?;
         auth = Some(token)
     };
     println!("{:?}", auth);
