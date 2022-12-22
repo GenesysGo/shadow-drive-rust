@@ -23,7 +23,7 @@ solana-account-decoder = "1.14.1"
 solana-sdk = "1.14.1"
 spl-associated-token-account = "1.0.5"
 spl-token = "3.5.0"
-shadow-drive-user-staking = {version = "1.1.1", features = ["no-entrypoint"]}
+shadow-drive-user-staking = { path = "../user-staking" }
 anchor-lang = "^0.26"
 async-trait = "^0.1"
 byte-unit = "^4"

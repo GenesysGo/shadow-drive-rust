@@ -5,6 +5,8 @@ members = [
     "app",
     "py",
     "drive",
+    "auth",
+    "user-staking",
 ]
 
 [workspace.package]
