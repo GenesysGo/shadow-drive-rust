@@ -43,7 +43,6 @@ async fn main() -> anyhow::Result<()> {
         let token = authenticate(&signer, &account_id).await?;
         auth = Some(token)
     };
-    println!("{:?}", auth);
 
     opts.command
         .process(signer, &url, opts.cfg_override.skip_confirm, auth)
