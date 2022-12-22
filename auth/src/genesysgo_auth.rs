@@ -45,31 +45,6 @@ pub async fn sign_in(signer: &dyn Signer, account_id: &str) -> anyhow::Result<St
     let resp = sign_in_step_1(signer, &client).await?;
     let resp = sign_in_step_2(account_id, &resp.token, &client).await?;
     Ok(resp.token)
-    // let signature = signer.sign_message(SIGNIN_MSG.as_bytes());
-    // let body = GenesysGoAuth {
-    //     message: bs58::encode(signature.as_ref()).into_string(),
-    //     signer: signer.pubkey().to_string(),
-    // };
-    // let client = reqwest::Client::new();
-    // // First request, acquire a JWT needed for the second request.
-    // let resp = client
-    //     .post(Url::parse(SIGNIN_URL_STEP1)?)
-    //     .header("Content-Type", "application/json")
-    //     .body(serde_json::to_string(&body)?)
-    //     .send()
-    //     .await?;
-    // let auth_resp: GenesysGoAuthResponse = serde_json::from_str(&resp.text().await?)?;
-    // // Second request, acquire JWT to be included with authenticated requests.
-    // let step2_url = SIGNIN_URL_STEP2.to_owned() + "/" + account_id;
-    // let token1 = format!("Bearer {}", auth_resp.token);
-    // let resp = client
-    //     .post(Url::parse(&step2_url)?)
-    //     .header("Content-Type", "application/json")
-    //     .header("Authorization", &token1)
-    //     .send()
-    //     .await?;
-    // let resp: TokenResponse = serde_json::from_str(&resp.text().await?)?;
-    // Ok(resp.token)
 }
 
 /// First request, acquire a JWT needed for the second request.
