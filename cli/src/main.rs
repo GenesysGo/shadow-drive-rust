@@ -18,7 +18,8 @@ async fn main() -> anyhow::Result<()> {
     let app = Opts::into_app();
     let matches = app.get_matches();
     let config = {
-        let config_file = solana_cli_config::CONFIG_FILE.as_ref()
+        let config_file = solana_cli_config::CONFIG_FILE
+            .as_ref()
             .ok_or_else(|| anyhow!("unable to determine a config file path on this OS or user"))?;
         solana_cli_config::Config::load(&config_file)
             .map_err(|e| anyhow!("unable to load config file: {}", e.to_string()))

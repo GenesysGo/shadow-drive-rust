@@ -8,10 +8,21 @@ const SIGNIN_MSG: &str = "Sign in to GenesysGo Shadow Platform.";
 const PORTAL_SIGNIN_URL: &str = "https://portal.genesysgo.net/api/signin";
 const RPC_SIGNIN_URL: &str = "https://portal.genesysgo.net/api/premium/token";
 
-/// The response object for sign-in Step #1.
+/// The request body for GenesysGo Portal/Network Authentication.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GenesysGoAuth {
+    /// Signed and base-58 encoded SIGNIN_MSG
+    message: String,
+    /// Base58 pubkey
+    signer: String,
+}
+
+/// The response object for GenesysGo Network/Portal authentication.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GenesysGoAuthResponse {
+    /// Bearer token
     pub token: String,
+    /// Extra user information from the GenesysGo network.
     pub user: GenesysGoUser,
 }
 
@@ -25,23 +36,17 @@ pub struct GenesysGoUser {
     pub updated_at: String,
 }
 
-/// A token returned after completing sign-in Step #2.
-/// This token can be used as a bearer token to make authenticated
-/// RPC requests.
+/// A token returned on successful GenesysGo RPC authentication.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenResponse {
+    /// Bearer token
     pub token: String,
 }
 
-/// The request body for sign-in Step #1.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GenesysGoAuth {
-    message: String, // signed and base-58 encoded SIGNIN_MSG
-    signer: String,
-}
-
-/// If you only need an bearer token for RPC and don't have or need to keep the portal token,
-/// this is the top-level function to call. It performs both sign-in calls.
+/// Acquire a bearer token to a GenesysGo Premium RPC account. The signer must be whitelisted.
+///
+/// This function makes two requests. Its first request acquires a GenesysGo Network auth token,
+/// which it then uses to acquire the RPC auth token.
 pub async fn authenticate(signer: &dyn Signer, account_id: &str) -> anyhow::Result<String> {
     let client = reqwest::Client::new();
     let resp = genesysgo_portal_auth(signer, &client).await?;
@@ -49,8 +54,12 @@ pub async fn authenticate(signer: &dyn Signer, account_id: &str) -> anyhow::Resu
     Ok(resp.token)
 }
 
-/// First request, acquire a JWT needed for the second request.
-pub async fn genesysgo_portal_auth(signer: &dyn Signer, client: &reqwest::Client) -> anyhow::Result<GenesysGoAuthResponse> {
+/// Authenticate to the GenesysGo Portal/Network. If your ultimate aim is
+/// to get an auth token for RPC, this is the first step.
+pub async fn genesysgo_portal_auth(
+    signer: &dyn Signer,
+    client: &reqwest::Client,
+) -> anyhow::Result<GenesysGoAuthResponse> {
     let signature = signer.sign_message(SIGNIN_MSG.as_bytes());
     let body = GenesysGoAuth {
         message: bs58::encode(signature.as_ref()).into_string(),
@@ -66,8 +75,8 @@ pub async fn genesysgo_portal_auth(signer: &dyn Signer, client: &reqwest::Client
     Ok(auth_resp)
 }
 
-/// Second request, uses the Bearer token from the first sign-in step,
-/// and acquires JWT used to authenticate normal RPC requests.
+/// Using the bearer token acquired from [genesysgo_portal_auth],
+/// acquire an RPC auth token for a GenesysGo Premium RPC account based on its Account ID.
 pub async fn genesysgo_rpc_auth(
     account_id: &str,
     step_1_auth_token: &str,

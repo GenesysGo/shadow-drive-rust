@@ -1,4 +1,3 @@
-
 use anyhow::anyhow;
 use byte_unit::Byte;
 use reqwest::header::HeaderMap;
@@ -19,9 +18,7 @@ pub const FILE_UPLOAD_BATCH_SIZE: usize = 5;
 
 /// Clap value parser for base58 string representations of [Pubkey].
 pub fn pubkey_arg(pubkey: &str) -> anyhow::Result<Pubkey> {
-    Pubkey::from_str(pubkey).map_err(
-        |e| anyhow!("invalid pubkey: {}", e.to_string())
-    )
+    Pubkey::from_str(pubkey).map_err(|e| anyhow!("invalid pubkey: {}", e.to_string()))
 }
 
 /// To get around using a [Box<dyn Signer>] with [ShadowDriveClient].
