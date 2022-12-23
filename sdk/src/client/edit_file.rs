@@ -4,6 +4,7 @@ use solana_sdk::{pubkey::Pubkey, signer::Signer};
 
 use super::ShadowDriveClient;
 use crate::{constants::SHDW_DRIVE_ENDPOINT, error::Error, models::*};
+use crate::constants::SHDW_DRIVE_OBJECT_PREFIX;
 
 impl<T> ShadowDriveClient<T>
 where
@@ -50,6 +51,13 @@ where
             .sign_message(message_to_sign.as_bytes())
             .to_string();
 
+        // TODO Add this form field?
+        // let url = format!(
+        //         "{}/{}/{}",
+        //         SHDW_DRIVE_OBJECT_PREFIX,
+        //         storage_account_key.to_string(),
+        //         data.name()
+        //     );
         let form = Form::new()
             .part("file", data.into_form_part().await?)
             .part("signer", Part::text(self.wallet.pubkey().to_string()))
@@ -58,10 +66,12 @@ where
                 "storage_account",
                 Part::text(storage_account_key.to_string()),
             );
+            // TODO This needs to be added, but it's oddly causing a missing field "message" when added
+            //.part("url", Part::text(url));
 
         let response = self
             .http_client
-            .post(format!("{}/upload", SHDW_DRIVE_ENDPOINT))
+            .post(format!("{}/edit", SHDW_DRIVE_ENDPOINT))
             .multipart(form)
             .send()
             .await?;

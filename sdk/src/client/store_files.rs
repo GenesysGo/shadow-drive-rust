@@ -26,7 +26,7 @@ where
         let filenames = data.iter().map(ShadowFile::name).join(",");
 
         let mut hasher = Sha256::new();
-        hasher.update(&filenames);
+        hasher.update(&filenames.as_bytes());
         let filename_hash = hasher.finalize();
 
         let message_to_sign = upload_message(storage_account_key, &hex::encode(filename_hash));
