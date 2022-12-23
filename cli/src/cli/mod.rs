@@ -1,5 +1,6 @@
 pub mod process;
 
+use std::path::PathBuf;
 use byte_unit::Byte;
 use clap::Parser;
 use shadow_drive_cli::FILE_UPLOAD_BATCH_SIZE;
@@ -146,7 +147,7 @@ pub enum Command {
         #[clap(parse(try_from_str = pubkey_arg))]
         storage_account: Pubkey,
         /// Name of the file to fetch
-        file: String,
+        filename: String,
     },
     /// Get basic file object data from a storage account file.
     GetObjectData {
@@ -162,7 +163,7 @@ pub enum Command {
         #[clap(parse(try_from_str = pubkey_arg))]
         storage_account: Pubkey,
         /// Name of the file to delete.
-        file: String,
+        filename: String,
     },
     /// Has to be the same name as a previously uploaded file
     EditFile {
@@ -171,7 +172,7 @@ pub enum Command {
         storage_account: Pubkey,
         /// Path to the new version of the file. Must be the same
         /// name as the file you are editing.
-        file: String,
+        path: PathBuf,
     },
     /// Upload one or more files to a storage account.
     StoreFiles {
@@ -184,6 +185,6 @@ pub enum Command {
         storage_account: Pubkey,
         /// A list of one or more filepaths, each of which is to be uploaded.
         #[clap(min_values = 1)]
-        files: Vec<String>,
+        files: Vec<PathBuf>,
     },
 }

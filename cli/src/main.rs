@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
             .as_ref()
             .ok_or_else(|| anyhow!("unable to determine a config file path on this OS or user"))?;
         solana_cli_config::Config::load(&config_file)
-            .map_err(|e| anyhow!(NO_CONFIG_FILE))
+            .map_err(|_| anyhow!(NO_CONFIG_FILE))
     }?;
     let keypath = opts
         .cfg_override

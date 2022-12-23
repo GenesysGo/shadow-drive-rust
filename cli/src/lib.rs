@@ -7,11 +7,9 @@ use shadow_drive_sdk::models::ShadowDriveResult;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Signature, Signer, SignerError};
 use std::io::stdin;
-use std::path::PathBuf;
 use std::str::FromStr;
-
-/// Shadow Drive Files are hosted at this domain.
-pub const GENESYSGO_DRIVE: &str = "https://shdw-drive.genesysgo.net";
+use chrono::DateTime;
+use shadow_drive_sdk::constants::SHDW_DRIVE_OBJECT_PREFIX;
 
 /// Maximum amount of files to batch into a single [store_files] request.
 pub const FILE_UPLOAD_BATCH_SIZE: usize = 5;
@@ -82,23 +80,13 @@ pub fn process_shadow_api_response<T>(response: ShadowDriveResult<T>) -> anyhow:
 }
 
 /// Generate a Shadow Drive file URL from storage account and filename.
-pub fn drive_url(storage_account: &Pubkey, file: &str) -> String {
+pub fn storage_object_url(storage_account: &Pubkey, file: &str) -> String {
     format!(
         "{}/{}/{}",
-        GENESYSGO_DRIVE,
+        SHDW_DRIVE_OBJECT_PREFIX,
         storage_account.to_string(),
         file
     )
-}
-
-/// Pull the basename off of a filepath. Useful for automatically
-/// generating filenames during upload.
-pub fn acquire_basename(path: &str) -> String {
-    let path = PathBuf::from_str(path).expect(&format!("not a valid path {}", path));
-    path.file_name()
-        .and_then(|s| s.to_str())
-        .unwrap()
-        .to_string()
 }
 
 /// Returns false when "Content-Type" header is not "text/plain".
@@ -120,6 +108,43 @@ pub async fn get_text(url: &String) -> anyhow::Result<Response> {
     }
     Ok(http_client.get(url).send().await?)
 }
+
+#[derive(Debug)]
+pub struct FileMetadata {
+    pub timestamp: i64,
+    pub content_type: String,
+    pub last_modified: i64,
+    pub etag: String,
+    pub storage_account: String,
+    pub storage_owner: String,
+}
+
+impl FileMetadata {
+    pub fn from_headers(h: &HeaderMap) -> anyhow::Result<Self> {
+        let getter = |key| {
+            Ok::<_, anyhow::Error>(h.get(key)
+              .ok_or(anyhow!("Missing file metadata header: {}", key))?
+              .to_str()?
+              .to_string())
+        };
+        let parse_timestamp = |key| {
+            let timestamp = getter(key)?;
+            let timestamp = DateTime::parse_from_rfc2822(&timestamp)?;
+            Ok::<_, anyhow::Error>(timestamp.timestamp())
+        };
+        let timestamp = parse_timestamp("date")?;
+        let last_modified = parse_timestamp("last-modified")?;
+        Ok(Self {
+            timestamp,
+            content_type: getter("content-type")?,
+            last_modified,
+            etag: getter("etag")?,
+            storage_account: getter("x-amz-meta-owner-account-pubkey")?,
+            storage_owner: getter("x-amz-meta-storage-account-pubkey")?,
+        })
+    }
+}
+
 
 /// Pulls "last-modified" from [HeaderMap], unaltered.
 pub fn last_modified(headers: &HeaderMap) -> anyhow::Result<String> {
