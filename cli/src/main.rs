@@ -9,6 +9,12 @@ use solana_clap_v3_utils::keypair::signer_from_path;
 
 pub const GENESYSGO_AUTH_KEYWORD: &str = "genesysgo";
 
+const NO_CONFIG_FILE: &str = "\
+Cannot find a config file. You likely do not have the official Solana CLI installed.
+Either install the Solana CLI or place a configuration file at ~/.config/solana/cli/config.yml
+See https://docs.solana.com/cli/install-solana-cli-tools for installation details.
+";
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // CLI Parse
@@ -22,13 +28,13 @@ async fn main() -> anyhow::Result<()> {
             .as_ref()
             .ok_or_else(|| anyhow!("unable to determine a config file path on this OS or user"))?;
         solana_cli_config::Config::load(&config_file)
-            .map_err(|e| anyhow!("unable to load config file: {}", e.to_string()))
+            .map_err(|e| anyhow!(NO_CONFIG_FILE))
     }?;
     let keypath = opts
         .cfg_override
         .keypair
         .unwrap_or(config.keypair_path.clone());
-    // Resolve it into a dyn Signer.
+    // Resolve it into a dyn Signer, and wrap it so that it can be passed as a `T: Signer`.
     let mut wallet_manager = None;
     let signer = signer_from_path(&matches, &keypath, "keypair", &mut wallet_manager)
         .map_err(|e| anyhow!("Could not resolve signer: {:?}", e))?;
