@@ -39,10 +39,6 @@ impl Signer for WrappedSigner {
         self.0.try_sign_message(message)
     }
 
-    fn sign_message(&self, message: &[u8]) -> Signature {
-        self.try_sign_message(message).unwrap()
-    }
-
     fn is_interactive(&self) -> bool {
         self.0.is_interactive()
     }
