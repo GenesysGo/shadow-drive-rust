@@ -13,9 +13,23 @@
 //!
 mod client;
 pub use client::*;
-pub use shadow_drive_user_staking::instructions::initialize_account::StorageAccount;
 
 pub mod constants;
 pub mod derived_addresses;
 pub mod error;
 pub mod models;
+
+pub use {
+    // allows users to specify number of bytes
+    byte_unit::Byte,
+    // allows users to deserialize type
+    shadow_drive_user_staking::instructions::initialize_account::StorageAccount,
+    // allows users to specify rpc config
+    solana_client::nonblocking::rpc_client::RpcClient,
+    // allows users to specify commitment level, and use pubkeys, keypairs, and signer
+    solana_sdk::{
+        commitment_config::CommitmentConfig,
+        pubkey::Pubkey,
+        signer::{keypair::Keypair, Signer},
+    },
+};
