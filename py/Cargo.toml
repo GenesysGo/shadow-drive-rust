@@ -10,4 +10,14 @@ repository = { workspace = true }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "shadow_drive"
+crate-type = ["cdylib"]
+
 [dependencies]
+concat-arrays = "0.1.2"
+ed25519-dalek = "1.0.1"
+pyo3 = { version = "0.17.3", features = ["extension-module"] }
+shadow-drive-sdk = { path = "../sdk/" }
+tokio = { version = "1.14.1", features = ["full"] }
+tokio-scoped = "0.2.0"
