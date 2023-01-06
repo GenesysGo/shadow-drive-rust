@@ -23,11 +23,6 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
     const SOLANA_MAINNET_BETA: &'static str = "https://api.mainnet-beta.solana.com";
     m.add("SOLANA_MAINNET_BETA", SOLANA_MAINNET_BETA)?;
 
-    // #[cfg(debug_assertions)]
-    // const WHITELIST_RPC: &'static str = "http://145.40.74.211:8899";
-    // #[cfg(debug_assertions)]
-    // m.add("WHITELIST_RPC", WHITELIST_RPC)?;
-
     #[pyclass]
     pub struct ShadowDriveClient {
         rust_client: Arc<ShadowDriveRustClient<Keypair>>,
@@ -52,15 +47,10 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
         ) -> PyResult<ShadowDriveClient> {
             let rust_client = Arc::new(ShadowDriveRustClient::new(
                 get_keypair_from_object(keypair, py)?,
-                // RpcClient::new(
-                //     // #[cfg(not(debug_assertions))]
                 SOLANA_MAINNET_BETA.to_string(),
-                //     // #[cfg(debug_assertions)]
-                //     // WHITELIST_RPC.to_string(),
-                // ),
             ));
             let runtime = Builder::new_multi_thread()
-                // .worker_threads(2)
+                .worker_threads(2)
                 .enable_time()
                 .enable_io()
                 .build()
