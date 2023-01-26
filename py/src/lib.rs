@@ -9,10 +9,11 @@ use pyo3::{
     types::{PyModule, PyString},
     PyResult, Python,
 };
+use shadow_drive_sdk::constants::SHDW_DRIVE_OBJECT_PREFIX;
 use shadow_drive_sdk::models::{ShadowFile, ShadowUploadResponse};
 use shadow_drive_sdk::{
-    Byte, CommitmentConfig, Keypair, Pubkey, RpcClient, ShadowDriveClient as ShadowDriveRustClient,
-    Signer,
+    read_keypair_file, Byte, CommitmentConfig, Keypair, Pubkey, RpcClient,
+    ShadowDriveClient as ShadowDriveRustClient, Signer,
 };
 use tokio::runtime::{Builder, Runtime};
 
@@ -40,13 +41,12 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
         /// use a custom RPC endpoint, use the new_with_rpc method. Or, to specify both, use the method
         /// new_with_commitment_and_rpc.
         #[new]
-        fn new(
-            keypair: PyObject,
-            account: Option<&str>,
-            py: Python,
-        ) -> PyResult<ShadowDriveClient> {
+        fn new(keypair: &str, account: Option<&str>) -> PyResult<ShadowDriveClient> {
+            let keypair: Keypair = read_keypair_file(keypair)
+                .map_err(|e| PyRuntimeError::new_err(format!("Failed to read keypair file {e}")))?;
+
             let rust_client = Arc::new(ShadowDriveRustClient::new(
-                get_keypair_from_object(keypair, py)?,
+                keypair,
                 SOLANA_MAINNET_BETA.to_string(),
             ));
             let runtime = Builder::new_multi_thread()
@@ -71,16 +71,18 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
         /// ShadowDriveClient constructor. Specify one of 'processed', 'confirmed', or 'finalized'
         /// for the commitment level.
         fn new_with_commitment(
-            keypair: PyObject,
+            keypair: Py<PyAny>,
             commitment: &str,
             account: Option<&str>,
-            py: Python,
         ) -> PyResult<ShadowDriveClient> {
             // Extract commitment
             let commitment_config = extract_commitment(commitment)?;
 
+            let keypair: Keypair = read_keypair_file(keypair.to_string())
+                .map_err(|e| PyRuntimeError::new_err(format!("Failed to read keypair file {e}")))?;
+
             let rust_client = Arc::new(ShadowDriveRustClient::new_with_rpc(
-                get_keypair_from_object(keypair, py)?,
+                keypair,
                 RpcClient::new_with_commitment(SOLANA_MAINNET_BETA.to_string(), commitment_config),
             ));
 
@@ -105,13 +107,15 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
         ///
         /// ShadowDriveClient constructor. Specify a custom RPC endpoint. Uses finalized commitment level.
         fn new_with_rpc(
-            keypair: PyObject,
+            keypair: Py<PyAny>,
             rpc: &str,
             account: Option<&str>,
-            py: Python,
         ) -> PyResult<ShadowDriveClient> {
+            let keypair: Keypair = read_keypair_file(keypair.to_string())
+                .map_err(|e| PyRuntimeError::new_err(format!("Failed to read keypair file {e}")))?;
+
             let rust_client = Arc::new(ShadowDriveRustClient::new_with_rpc(
-                get_keypair_from_object(keypair, py)?,
+                keypair,
                 RpcClient::new_with_commitment(rpc.to_string(), CommitmentConfig::finalized()),
             ));
 
@@ -137,7 +141,7 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
         /// ShadowDriveClient constructor. Specify one of 'processed', 'confirmed', or 'finalized'
         /// for the commitment level, and a custom RPC enpdoint.
         fn new_with_commitment_and_rpc(
-            keypair: PyObject,
+            keypair: Py<PyAny>,
             commitment: &str,
             rpc: &str,
             account: Option<&str>,
@@ -146,8 +150,11 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
             // Extract commitment
             let commitment_config = extract_commitment(commitment)?;
 
+            let keypair: Keypair = read_keypair_file(keypair.to_string())
+                .map_err(|e| PyRuntimeError::new_err(format!("Failed to read keypair file {e}")))?;
+
             let rust_client = Arc::new(ShadowDriveRustClient::new_with_rpc(
-                get_keypair_from_object(keypair, py)?,
+                keypair,
                 RpcClient::new_with_commitment(rpc.to_string(), commitment_config),
             ));
 
@@ -172,12 +179,13 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
         ///
         /// Create a Shadow Drive storage account with the specified name and number of bytes.
         fn create_account(
-            &self,
+            &mut self,
             name: &str,
             size: u64,
+            use_account: Option<bool>,
             py: Python,
         ) -> PyResult<(Py<PyString>, Py<PyString>)> {
-            self.runtime.block_on(async move {
+            let result: PyResult<(Py<PyString>, Py<PyString>)> = self.runtime.block_on(async {
                 self.rust_client
                     .create_storage_account(
                         name,
@@ -195,7 +203,16 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
                         PyValueError::new_err(format!("failed to create storage account {err:?}"))
                             .into()
                     })
-            })
+            });
+            if let Ok((ref bucket, _)) = result {
+                if let Some(true) = use_account {
+                    self.current_account = Some(
+                        Pubkey::from_str(&bucket.to_string())
+                            .expect("sucessful storage account creation"),
+                    );
+                }
+            }
+            result
         }
 
         /// delete_account(name, size, rpc, /)
@@ -212,6 +229,103 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
                     PyValueError::new_err(format!("failed to delete storage account {err:?}"))
                         .into()
                 })
+        }
+
+        /// add_storage(amount, /)
+        /// --
+        ///
+        /// Add bytes to the current storage account (set by set_account, or when creating with use_account=True)
+        fn add_storage(&self, amount: u64) -> PyResult<()> {
+            self.runtime.block_on(async {
+                // Check if account is immutable
+                if let Some(ref account) = self.current_account {
+                    let storage_account = self
+                        .rust_client
+                        .get_storage_account(account)
+                        .await
+                        .map_err(|e| {
+                            PyRuntimeError::new_err(format!(
+                                "unable to retrieve storage account {e:?}"
+                            ))
+                        })?;
+
+                    if storage_account.is_immutable() {
+                        self.rust_client
+                            .add_immutable_storage(account, Byte::from(amount))
+                            .await
+                            .map(|response| {
+                                println!("AddImmutableStorage Response: {}", response.message);
+                            })
+                            .map_err(|err| {
+                                PyValueError::new_err(format!("failed to add storage {err:?}"))
+                                    .into()
+                            })
+                    } else {
+                        self.rust_client
+                            .add_storage(account, Byte::from(amount))
+                            .await
+                            .map(|response| {
+                                println!("AddStorage Response: {}", response.message);
+                            })
+                            .map_err(|err| {
+                                PyValueError::new_err(format!("failed to add storage {err:?}"))
+                                    .into()
+                            })
+                    }
+                } else {
+                    Err(PyRuntimeError::new_err(
+                        "no storage account is set. Set one using the set_account(...) method",
+                    ))
+                }
+            })
+        }
+
+        /// reduce_storage(amount, /)
+        /// --
+        ///
+        /// Reduce bytes of the current storage account (set by set_account, or when creating with use_account=True)
+        fn reduce_storage(&self, amount: u64) -> PyResult<()> {
+            self.runtime.block_on(async {
+                // Check if account is immutable
+                if let Some(ref account) = self.current_account {
+                    let storage_account = self
+                        .rust_client
+                        .get_storage_account(account)
+                        .await
+                        .map_err(|e| {
+                            PyRuntimeError::new_err(format!(
+                                "unable to retrieve storage account {e:?}"
+                            ))
+                        })?;
+
+                    let is_immutable: bool = storage_account.is_immutable();
+                    let total_storage = storage_account.storage();
+                    if total_storage < amount {
+                        return Err(PyRuntimeError::new_err(format!("Account only has {total_storage} bytes, but you attempted to reduce by {amount}")));
+                    }
+
+                    if is_immutable {
+                        Err(PyRuntimeError::new_err(
+                            "Account selected is immutable. Cannot remove storage",
+                        ))
+                    } else {
+                        self.rust_client
+                            .reduce_storage(account, Byte::from(amount))
+                            .await
+                            .map(|response| {
+                                println!("RemoveStorage Response: {}", response.message);
+                            })
+                            .map_err(|err| {
+                                PyValueError::new_err(format!("failed to add storage {err:?}"))
+                                    .into()
+                            })
+                    }
+                } else {
+                    Err(PyRuntimeError::new_err(
+                        "no storage account is set. Set one using the set_account(...) method",
+                    ))
+                }
+            })
         }
 
         /// upload_files(files, /)
@@ -292,6 +406,152 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
             }
         }
 
+        /// list_files(/)
+        /// --
+        ///
+        /// List all files associated with the current storage account (if account=None). If an account is provided, those files are checked instead.
+        fn list_files(&self, account: Option<&str>) -> PyResult<Vec<String>> {
+            let account_to_check = self
+                .current_account
+                .map(Result::Ok)
+                .or(account.map(Pubkey::from_str));
+
+            if let Some(Ok(ref storage_account)) = account_to_check {
+                self.runtime.block_on(async move {
+                    self.rust_client
+                        .list_objects(storage_account)
+                        .await
+                        .map_err(|e| {
+                            PyRuntimeError::new_err(format!(
+                                "failed to gather files for storage account: {e:?}"
+                            ))
+                        })
+                })
+            } else {
+                Err(PyRuntimeError::new_err("No storage account is specified. Create one with create_account, specify one with set_account, or pass in the 'account' optional arugment"))
+            }
+        }
+
+        /// get_file(/)
+        /// --
+        ///
+        /// Retrieve the specified file if it exists in the storage account. Can also provide a url to a file (need not be in the current storage account).
+        fn get_file(&self, file: &str) -> PyResult<Vec<u8>> {
+            let url = if file.contains(SHDW_DRIVE_OBJECT_PREFIX) {
+                file.to_string()
+            } else {
+                if let Some(ref storage_account) = self.current_account {
+                    format!("{SHDW_DRIVE_OBJECT_PREFIX}")
+                } else {
+                    return Err(PyRuntimeError::new_err("No storage account is specified. Create one with create_account, specify one with set_account, or pass in the 'account' optional arugment"));
+                }
+            };
+            self.runtime.block_on(async move {
+                reqwest::get(url)
+                    .await
+                    .map(|response| response.bytes())
+                    .map_err(|e| PyRuntimeError::new_err(format!("failed to retrieve file {e:?}")))?
+                    .await
+                    .map(|bytes| bytes.to_vec())
+                    .map_err(|e| PyRuntimeError::new_err(format!("failed to retrieve file {e:?}")))
+            })
+        }
+
+        /// cancel_delete_storage(/)
+        /// --
+        ///
+        /// If a storage account was previously requested to be deleted, this sends a request to cancel that deletion request.
+        /// Sends the request for another account if it is provided. If successful, returns transaction id
+        fn cancel_delete_account(&self, account: Option<&str>) -> PyResult<String> {
+            let account_to_check = self
+                .current_account
+                .map(Result::Ok)
+                .or(account.map(Pubkey::from_str));
+
+            if let Some(Ok(ref storage_account)) = account_to_check {
+                self.runtime.block_on(async move {
+                    self.rust_client
+                        .cancel_delete_storage_account(storage_account)
+                        .await
+                        .map(|response| {
+                            println!("CancelDeleteAccount Response: {}", response.txid);
+                            response.txid
+                        })
+                        .map_err(|err| {
+                            PyValueError::new_err(format!("failed to add storage {err:?}")).into()
+                        })
+                })
+            } else {
+                Err(PyRuntimeError::new_err("No storage account is specified. Create one with create_account, specify one with set_account, or pass in the 'account' optional arugment"))
+            }
+        }
+
+        /// make_account_immutable(skip_warning/)
+        /// --
+        ///
+        /// Makes account immutable. NOTE: THIS IS IRREVERSIBLE!
+        fn make_account_immutable(&self, skip_warning: Option<bool>) -> PyResult<()> {
+            if let Some(ref storage_account) = self.current_account {
+                // Warn user if they are not skipping
+                if skip_warning != Some(true) {
+                    println!("You are about to make {storage_account} immutable. This is a permanent, irreversible action. Proceed? [y/n]");
+                    let mut user_input = String::new();
+                    let _ = std::io::stdin().read_line(&mut user_input);
+
+                    if !["yes", "y"].contains(&user_input.to_lowercase().as_ref()) {
+                        println!("Did not mark account as immutable");
+                        return Ok(());
+                    }
+                }
+
+                self.runtime.block_on(async move {
+                    self.rust_client
+                        .make_storage_immutable(storage_account)
+                        .await
+                        .map(|response| {
+                            println!("RemoveStorage Response: {}", response.message);
+                        })
+                        .map_err(|e| {
+                            PyRuntimeError::new_err(format!(
+                                "failed to mark account as immutable: {e:?}"
+                            ))
+                        })
+                })
+            } else {
+                Err(PyRuntimeError::new_err("No storage account is specified. Create one with create_account, specify one with set_account, or pass in the 'account' optional arugment"))
+            }
+        }
+
+        /// claim_stake(skip_warning/)
+        /// --
+        ///
+        /// Claims outstanding for current account (or provided optional account). Returns transaction signature if successful.
+        fn claim_stake(&self, account: Option<&str>) -> PyResult<String> {
+            let account_to_check = self
+                .current_account
+                .map(Result::Ok)
+                .or(account.map(Pubkey::from_str));
+
+            if let Some(Ok(ref storage_account)) = account_to_check {
+                self.runtime.block_on(async move {
+                    self.rust_client
+                        .claim_stake(storage_account)
+                        .await
+                        .map(|response| {
+                            println!("ClaimStake Response: {}", response.txid);
+                            response.txid
+                        })
+                        .map_err(|e| {
+                            PyRuntimeError::new_err(format!(
+                                "failed to claim stake for storage account: {e:?}"
+                            ))
+                        })
+                })
+            } else {
+                Err(PyRuntimeError::new_err("No storage account is specified. Create one with create_account, specify one with set_account, or pass in the 'account' optional arugment"))
+            }
+        }
+
         /// set_account(account, /)
         /// --
         ///
@@ -310,39 +570,17 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_class::<ShadowDriveClient>()?;
 
-    #[cfg(debug_assertions)]
-    #[pyfunction]
-    fn print_pubkey(keypair: PyObject, py: Python) -> Py<PyString> {
-        let keypair = get_keypair_from_object(keypair, py).unwrap();
-        PyString::new(py, &keypair.pubkey().to_string()).into()
-    }
-    #[cfg(debug_assertions)]
-    m.add_function(wrap_pyfunction!(print_pubkey, m)?)?;
-
-    #[cfg(debug_assertions)]
-    {
-        use pyo3::types::PyList;
-        #[pyfunction]
-        fn sign_message(keypair: PyObject, message: Py<PyList>, py: Python) -> Py<PyString> {
-            let keypair: Keypair = get_keypair_from_object(keypair, py).unwrap();
-            let sig = keypair.sign_message(message.extract::<Vec<u8>>(py).unwrap().as_ref());
-            PyString::new(py, &sig.to_string()).into()
-        }
-        #[cfg(debug_assertions)]
-        m.add_function(wrap_pyfunction!(sign_message, m)?)?;
-    }
-
     Ok(())
 }
 
-fn get_keypair_from_object(keypair: PyObject, py: Python) -> PyResult<Keypair> {
-    // Try to grab byte array
-    let bytes: [u8; 64] = keypair.call_method0(py, "to_bytes_array")?.extract(py)?;
+// fn get_keypair_from_object(keypair: PyObject, py: Python) -> PyResult<Keypair> {
+//     // Try to grab byte array
+//     let bytes: [u8; 64] = keypair.call_method0(py, "to_bytes_array")?.extract(py)?;
 
-    // Build keypair
-    Ok(Keypair::from_bytes(&bytes)
-        .expect("should not fail since we have valid 64 byte array at this point"))
-}
+//     // Build keypair
+//     Ok(Keypair::from_bytes(&bytes)
+//         .expect("should not fail since we have valid 64 byte array at this point"))
+// }
 
 fn extract_commitment(commitment: &str) -> PyResult<CommitmentConfig> {
     match commitment.to_lowercase().as_ref() {
