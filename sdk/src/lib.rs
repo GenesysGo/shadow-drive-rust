@@ -30,6 +30,9 @@ pub use {
     solana_sdk::{
         commitment_config::CommitmentConfig,
         pubkey::Pubkey,
-        signer::{keypair::Keypair, Signer},
+        signer::{
+            keypair::{read_keypair_file, Keypair},
+            Signer,
+        },
     },
 };
