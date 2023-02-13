@@ -61,7 +61,7 @@ where
 
         let response = self
             .http_client
-            .post(format!("{}/upload", SHDW_DRIVE_ENDPOINT))
+            .post(format!("{}/edit", SHDW_DRIVE_ENDPOINT))
             .multipart(form)
             .send()
             .await?;
