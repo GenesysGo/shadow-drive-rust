@@ -573,15 +573,6 @@ fn shadow_drive(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
-// fn get_keypair_from_object(keypair: PyObject, py: Python) -> PyResult<Keypair> {
-//     // Try to grab byte array
-//     let bytes: [u8; 64] = keypair.call_method0(py, "to_bytes_array")?.extract(py)?;
-
-//     // Build keypair
-//     Ok(Keypair::from_bytes(&bytes)
-//         .expect("should not fail since we have valid 64 byte array at this point"))
-// }
-
 fn extract_commitment(commitment: &str) -> PyResult<CommitmentConfig> {
     match commitment.to_lowercase().as_ref() {
         "processed" => Ok(CommitmentConfig::processed()),
