@@ -45,7 +45,7 @@ pub struct DeleteFileResponse {
 }
 
 /// [`ShadowFile`] is the combination of a file name and a [`Payload`].
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ShadowFile {
     pub name: String,
     pub data: Payload,
