@@ -147,6 +147,14 @@ pub struct ShadowUploadResponse {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct ShadowEditResponse {
+    #[serde(default)]
+    pub finalized_location: String,
+    #[serde(default)]
+    pub error: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct UploadError {
     pub file: String,
     pub storage_account: String,
