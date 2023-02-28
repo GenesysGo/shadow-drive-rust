@@ -45,7 +45,7 @@ pub struct DeleteFileResponse {
 }
 
 /// [`ShadowFile`] is the combination of a file name and a [`Payload`].
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ShadowFile {
     pub name: String,
     pub data: Payload,
@@ -144,6 +144,14 @@ pub struct ShadowUploadResponse {
     pub message: String,
     #[serde(default)]
     pub upload_errors: Vec<UploadError>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ShadowEditResponse {
+    #[serde(default)]
+    pub finalized_location: String,
+    #[serde(default)]
+    pub error: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]

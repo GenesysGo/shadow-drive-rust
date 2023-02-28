@@ -40,12 +40,21 @@ async fn main() {
         ),
     ];
     let response = client
-        .store_files(&account, files)
+        .store_files(&account, files.clone())
         .await
         .expect("failed to upload files");
     println!("uploaded files");
     for url in &response.finalized_locations {
         println!("    {url}")
+    }
+    // Try editing
+    for file in files {
+        let response = client
+            .edit_file(&account, file)
+            .await
+            .expect("failed to upload files");
+        assert!(!response.finalized_location.is_empty(), "failed edit");
+        println!("edited file: {}", response.finalized_location);
     }
 
     // Delete files
