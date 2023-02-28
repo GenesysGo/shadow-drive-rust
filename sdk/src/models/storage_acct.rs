@@ -103,3 +103,18 @@ pub enum StorageAcct {
     V1(StorageAccount),
     V2(StorageAccountV2),
 }
+
+impl StorageAcct {
+    pub fn is_immutable(&self) -> bool {
+        match self {
+            StorageAcct::V1(acct) => acct.immutable,
+            StorageAcct::V2(acct) => acct.immutable,
+        }
+    }
+    pub fn storage(&self) -> u64 {
+        match self {
+            StorageAcct::V1(acct) => acct.reserved_bytes,
+            StorageAcct::V2(acct) => acct.reserved_bytes,
+        }
+    }
+}
