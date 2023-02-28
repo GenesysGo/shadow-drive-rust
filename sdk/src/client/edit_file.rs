@@ -46,7 +46,7 @@ where
         &self,
         storage_account_key: &Pubkey,
         data: ShadowFile,
-    ) -> ShadowDriveResult<ShadowUploadResponse> {
+    ) -> ShadowDriveResult<ShadowEditResponse> {
         let message_to_sign = edit_message(storage_account_key, data.name(), &data.sha256().await?);
 
         let signature = self
@@ -56,13 +56,15 @@ where
 
         let url = format!(
             "{}/{}/{}",
-            SHDW_DRIVE_OBJECT_PREFIX, storage_account_key, &data.name
+            SHDW_DRIVE_OBJECT_PREFIX,
+            storage_account_key,
+            data.name()
         );
 
         let form = Form::new()
             .part("file", data.into_form_part().await?)
-            .part("signer", Part::text(self.wallet.pubkey().to_string()))
             .part("message", Part::text(signature))
+            .part("signer", Part::text(self.wallet.pubkey().to_string()))
             .part(
                 "storage_account",
                 Part::text(storage_account_key.to_string()),
@@ -83,7 +85,7 @@ where
             });
         }
 
-        let response = response.json::<ShadowUploadResponse>().await?;
+        let response = response.json::<ShadowEditResponse>().await?;
 
         Ok(response)
     }
