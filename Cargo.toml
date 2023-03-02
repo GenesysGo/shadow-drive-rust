@@ -6,11 +6,10 @@ members = [
     "py",
     "drive",
     "auth",
-    "user-staking",
 ]
 
 [workspace.package]
-version = "0.5.0"
+version = "0.6.1"
 authors = [
     "Cavey Cool <caveycool@gmail.com>",
     "Tracy <tracy@tracycodes.com>"
