@@ -1,7 +1,7 @@
 [package]
 name = "shadow-drive-app"
 description = "The Shadow Drive Desktop App, by GenesysGo"
-version = "0.0.0"
+version = { workspace = true }
 authors = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }

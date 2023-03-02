@@ -1,7 +1,7 @@
 [package]
 name = "shadow-drive-py"
 description = "The Python SDK for GenesysGo's Shadow Drive"
-version = "0.0.0"
+version = { workspace = true }
 authors = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
