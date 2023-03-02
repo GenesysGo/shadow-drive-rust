@@ -5,6 +5,7 @@ members = [
     "app",
     "py",
     "drive",
+    "auth",
 ]
 
 [workspace.package]
