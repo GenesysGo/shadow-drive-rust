@@ -1,30 +1,31 @@
+use std::{
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc, RwLock,
+    },
+    time::{Duration, Instant},
+};
+
+use async_trait::async_trait;
+use log::*;
 /// Copied from `solana-rpc-client` crate, modified [HttpSender]
 /// to allow for passing in default headers. This is useful for
 /// passing auth headers to RPC services like GenesysGo.
 use reqwest::header::HeaderMap;
+use reqwest::{
+    self,
+    header::{self, CONTENT_TYPE, RETRY_AFTER},
+    StatusCode,
+};
 use serde::Deserialize;
 use serde_json::{json, Value};
-use solana_client::rpc_custom_error as custom_error;
-use solana_client::rpc_request::{RpcError, RpcRequest, RpcResponseErrorData};
-use solana_client::rpc_response::RpcSimulateTransactionResult;
-use solana_client::rpc_sender::{RpcSender, RpcTransportStats};
-use {
-    async_trait::async_trait,
-    log::*,
-    reqwest::{
-        self,
-        header::{self, CONTENT_TYPE, RETRY_AFTER},
-        StatusCode,
-    },
-    std::{
-        sync::{
-            atomic::{AtomicU64, Ordering},
-            Arc, RwLock,
-        },
-        time::{Duration, Instant},
-    },
-    tokio::time::sleep,
+use solana_client::{
+    rpc_custom_error as custom_error,
+    rpc_request::{RpcError, RpcRequest, RpcResponseErrorData},
+    rpc_response::RpcSimulateTransactionResult,
+    rpc_sender::{RpcSender, RpcTransportStats},
 };
+use tokio::time::sleep;
 
 #[derive(Deserialize, Debug)]
 pub struct RpcErrorObject {
