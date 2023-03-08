@@ -1,12 +1,12 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
-use shadow_drive_user_staking::accounts as shdw_drive_accounts;
-use shadow_drive_user_staking::instruction as shdw_drive_instructions;
+use shadow_drive_user_staking::{
+    accounts as shdw_drive_accounts, instruction as shdw_drive_instructions,
+};
 use solana_sdk::{
     instruction::Instruction, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 
 use super::ShadowDriveClient;
-
 use crate::{constants::PROGRAM_ADDRESS, derived_addresses, models::*};
 
 impl<T> ShadowDriveClient<T>
