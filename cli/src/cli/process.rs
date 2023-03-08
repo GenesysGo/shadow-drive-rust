@@ -1,19 +1,26 @@
-use std::path::PathBuf;
-use super::Command;
+use std::{
+    fs::{self, DirEntry},
+    io::Read,
+    path::{Path, PathBuf},
+    str::FromStr,
+    thread::sleep,
+    time::Duration,
+};
+
+use anyhow::anyhow;
 use itertools::Itertools;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-use shadow_drive_cli::{FileMetadata, process_shadow_api_response};
-use shadow_drive_cli::wait_for_user_confirmation;
-use shadow_drive_sdk::models::ShadowFile;
-use shadow_drive_sdk::{ShadowDriveClient, StorageAccountVersion};
-use shadow_rpc_auth::genesysgo_auth::{authenticate, parse_account_id_from_url};
-use shadow_rpc_auth::HttpSenderWithHeaders;
-use solana_client::nonblocking;
-use solana_client::rpc_client::RpcClient;
+use runes::Runes;
+use shadow_drive_cli::{process_shadow_api_response, wait_for_user_confirmation, FileMetadata};
+use shadow_drive_sdk::{models::ShadowFile, Pubkey, ShadowDriveClient, StorageAccountVersion};
+use shadow_rpc_auth::{
+    genesysgo_auth::{authenticate, parse_account_id_from_url},
+    HttpSenderWithHeaders,
+};
+use solana_client::{nonblocking, rpc_client::RpcClient};
 use solana_sdk::signature::Signer;
-use std::str::FromStr;
-use std::thread::sleep;
-use std::time::Duration;
+
+use super::Command;
 
 /// We either create an authenticated client with default auth headers,
 /// or else we simply use the [RpcClient] provided by the normal
@@ -54,7 +61,7 @@ pub fn shadow_client_factory<T: Signer>(
 
 impl Command {
     pub async fn process<T: Signer>(
-        &self,
+        self,
         signer: T,
         rpc_url: &str,
         skip_confirm: bool,
@@ -74,7 +81,7 @@ impl Command {
                 println!("Create Storage Account {}: {}", name, size);
                 wait_for_user_confirmation(skip_confirm)?;
                 let response = client
-                    .create_storage_account(name, size.clone(), StorageAccountVersion::v2())
+                    .create_storage_account(&name, size.clone(), StorageAccountVersion::v2())
                     .await;
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
@@ -83,7 +90,7 @@ impl Command {
                 let client = shadow_client_factory(signer, rpc_url, auth);
                 println!("Delete Storage Account {}", storage_account.to_string());
                 wait_for_user_confirmation(skip_confirm)?;
-                let response = client.delete_storage_account(storage_account).await;
+                let response = client.delete_storage_account(&storage_account).await;
 
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
@@ -95,7 +102,7 @@ impl Command {
                     storage_account.to_string()
                 );
                 wait_for_user_confirmation(skip_confirm)?;
-                let response = client.cancel_delete_storage_account(storage_account).await;
+                let response = client.cancel_delete_storage_account(&storage_account).await;
 
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
@@ -107,7 +114,7 @@ impl Command {
                     storage_account.to_string()
                 );
                 wait_for_user_confirmation(skip_confirm)?;
-                let response = client.claim_stake(storage_account).await;
+                let response = client.claim_stake(&storage_account).await;
 
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
@@ -123,7 +130,7 @@ impl Command {
                     size
                 );
                 wait_for_user_confirmation(skip_confirm)?;
-                let response = client.reduce_storage(storage_account, size.clone()).await;
+                let response = client.reduce_storage(&storage_account, size.clone()).await;
 
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
@@ -135,7 +142,7 @@ impl Command {
                 let client = shadow_client_factory(signer, rpc_url, auth);
                 println!("Increase Storage {}: {}", storage_account.to_string(), size);
                 wait_for_user_confirmation(skip_confirm)?;
-                let response = client.add_storage(storage_account, size.clone()).await;
+                let response = client.add_storage(&storage_account, size.clone()).await;
 
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
@@ -152,7 +159,7 @@ impl Command {
                 );
                 wait_for_user_confirmation(skip_confirm)?;
                 let response = client
-                    .add_immutable_storage(storage_account, size.clone())
+                    .add_immutable_storage(&storage_account, size.clone())
                     .await;
 
                 let resp = process_shadow_api_response(response)?;
@@ -162,7 +169,7 @@ impl Command {
                 let client = shadow_client_factory(signer, rpc_url, auth);
                 println!("Make Storage Immutable {}", storage_account.to_string());
                 wait_for_user_confirmation(skip_confirm)?;
-                let response = client.make_storage_immutable(storage_account).await;
+                let response = client.make_storage_immutable(&storage_account).await;
 
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
@@ -170,7 +177,7 @@ impl Command {
             Command::GetStorageAccount { storage_account } => {
                 let client = ShadowDriveClient::new(signer, rpc_url);
                 println!("Get Storage Account {}", storage_account.to_string());
-                let response = client.get_storage_account(storage_account).await;
+                let response = client.get_storage_account(&storage_account).await;
 
                 let act = process_shadow_api_response(response)?;
                 println!("{:#?}", act);
@@ -189,7 +196,7 @@ impl Command {
                     "List Files for Storage Account {}",
                     storage_account.to_string()
                 );
-                let response = client.list_objects(storage_account).await;
+                let response = client.list_objects(&storage_account).await;
                 let files = process_shadow_api_response(response)?;
                 println!("{:#?}", files);
             }
@@ -197,7 +204,7 @@ impl Command {
                 storage_account,
                 filename,
             } => {
-                let url = shadow_drive_cli::storage_object_url(storage_account, filename);
+                let url = shadow_drive_cli::storage_object_url(&storage_account, &filename);
                 let resp = shadow_drive_cli::get_text(&url).await?;
                 let last_modified = shadow_drive_cli::last_modified(resp.headers())?;
                 println!("Get Text at {}", &url);
@@ -210,10 +217,10 @@ impl Command {
                 filename,
             } => {
                 let client = ShadowDriveClient::new(signer, rpc_url);
-                let url = shadow_drive_cli::storage_object_url(storage_account, filename);
+                let url = shadow_drive_cli::storage_object_url(&storage_account, &filename);
                 println!("Delete file {}", &url);
                 wait_for_user_confirmation(skip_confirm)?;
-                let response = client.delete_file(storage_account, url.clone()).await;
+                let response = client.delete_file(&storage_account, url.clone()).await;
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
             }
@@ -222,10 +229,14 @@ impl Command {
                 path,
             } => {
                 let client = ShadowDriveClient::new(signer, rpc_url);
-                let shadow_file = shadow_file_with_basename(path);
-                println!("Edit file {} {}", storage_account.to_string(), path.display());
+                let shadow_file = shadow_file_with_basename(&path);
+                println!(
+                    "Edit file {} {}",
+                    storage_account.to_string(),
+                    path.display()
+                );
                 wait_for_user_confirmation(skip_confirm)?;
-                let response = client.edit_file(storage_account, shadow_file).await;
+                let response = client.edit_file(&storage_account, shadow_file).await;
                 let resp = process_shadow_api_response(response)?;
                 println!("{:#?}", resp);
             }
@@ -233,7 +244,7 @@ impl Command {
                 storage_account,
                 file,
             } => {
-                let url = shadow_drive_cli::storage_object_url(storage_account, file);
+                let url = shadow_drive_cli::storage_object_url(&storage_account, &file);
                 println!("Get object data {} {}", storage_account.to_string(), file);
                 let http_client = reqwest::Client::new();
                 let response = http_client.head(url).send().await?;
@@ -252,14 +263,12 @@ impl Command {
                 The files in their current state become public as soon as they're uploaded."
                 );
                 wait_for_user_confirmation(skip_confirm)?;
-                for chunk in &files.into_iter().chunks(*batch_size) {
+                for chunk in &files.iter().chunks(batch_size) {
                     let response = client
                         .store_files(
                             &storage_account,
                             chunk
-                                .map(|path: &PathBuf| {
-                                    shadow_file_with_basename(path)
-                                })
+                                .map(|path: &PathBuf| shadow_file_with_basename(path))
                                 .collect(),
                         )
                         .await;
@@ -268,9 +277,146 @@ impl Command {
                     sleep(Duration::from_millis(150));
                 }
             }
+            Command::StoreAndCreateRunes { directory, target } => {
+                println!("you requested to make runes using {directory:?}");
+
+                // Get the paths and sizes of files in the given directory
+                // NOTE: this checks that all file sizes are under MAX_FILE_SIZE
+                let (paths, filesizes) = get_paths_and_sizes(&directory)?;
+                let total_bytes = filesizes.iter().sum::<usize>() as u64;
+
+                // check if target exists
+                if target.exists() {
+                    return Err(anyhow!("{target:?} already exists"));
+                }
+                if let Some(parent) = dbg!(target.parent()) {
+                    // TODO: handle
+                    if !parent.eq(Path::new("")) {
+                        fs::create_dir_all(parent);
+                    }
+                }
+                println!("if we don't get here rust is broken");
+
+                // check enough shdw
+                let client = ShadowDriveClient::new(signer, rpc_url);
+                println!("made client");
+                let (storage_price, min_size) = client
+                    .get_storage_price_and_min_account_size()
+                    .await
+                    .map_err(|e| anyhow!("{e:?}"))?;
+                println!("got price");
+
+                let cost: u64 = (total_bytes.max(min_size) as u128)
+                    .checked_mul(storage_price as u128)
+                    .unwrap()
+                    .checked_div(2u128.pow(30) as u128)
+                    .unwrap()
+                    .try_into()
+                    .unwrap();
+                println!("got cost");
+
+                let balance: u64 = client
+                    .get_shdw_balance()
+                    .await
+                    .map_err(|e| anyhow!("{e:?}"))?;
+                println!("got balance");
+
+                if cost > balance {
+                    return Err(anyhow!(
+                        "Insufficient funds, cost = {cost:?}, balance = {balance:?}"
+                    ));
+                }
+
+                // make storage account
+                println!("target name");
+                let target_name = target.file_name().unwrap().to_string_lossy();
+                println!("target name2");
+
+                // use std::borrow::Borrow;
+                let response = client
+                    .create_storage_account(
+                        &target_name,
+                        total_bytes.max(min_size).into(),
+                        StorageAccountVersion::V2,
+                    )
+                    .await;
+                // TODO: graceful error handling
+                let storage_account: Pubkey =
+                    Pubkey::from_str(&process_shadow_api_response(response)?.shdw_bucket.unwrap())
+                        .unwrap();
+                // todo alert user of success
+                println!("created storage account");
+
+                // Load all filedata
+                let (filedata, filenames): (Vec<Vec<u8>>, Vec<String>) = paths
+                    .iter()
+                    .zip(&filesizes)
+                    .map(|(path, &size)| {
+                        let mut buffer = Vec::with_capacity(size);
+                        let mut file = std::fs::File::open(path).expect("file has been checked");
+                        file.read_to_end(&mut buffer)
+                            .expect("file has been checked");
+                        (
+                            buffer,
+                            path.file_name().unwrap().to_str().unwrap().to_string(),
+                        )
+                    })
+                    .unzip();
+
+                // make runes
+                let runes = Runes::new(
+                    storage_account.to_bytes(),
+                    filenames.clone(),
+                    &filedata,
+                    filesizes.clone(),
+                );
+
+                // upload data to account
+                let shadow_files: Vec<ShadowFile> = filedata
+                    .into_iter()
+                    .zip(filenames)
+                    .map(|(data, name)| ShadowFile::bytes(name, data))
+                    .collect();
+                process_shadow_api_response(
+                    client.store_files(&storage_account, shadow_files).await,
+                )?;
+
+                // save runes
+                runes
+                    .save(target)
+                    .map_err(|e| anyhow!("failed to save runes {e:?}"))?;
+            }
         }
         Ok(())
     }
+}
+
+pub const MAX_FILE_SIZE: usize = 1000;
+/// Gets the paths and sizes of files in the given directory
+fn get_paths_and_sizes(directory: &PathBuf) -> anyhow::Result<(Vec<PathBuf>, Vec<usize>)> {
+    let mut filesizes = vec![];
+    let mut paths = vec![];
+    if let Ok(paths_iter) = fs::read_dir(directory) {
+        for path in paths_iter {
+            if let Ok(path) = path {
+                if let Ok(metadata) = path.metadata() {
+                    if (metadata.len() as usize) > MAX_FILE_SIZE {
+                        return Err(anyhow!("{path:?} is larger than {MAX_FILE_SIZE} bytes"));
+                    }
+                    filesizes.push(metadata.len() as usize);
+                    paths.push(path.path());
+                } else {
+                    return Err(anyhow!("could not get metadata for {path:?}"));
+                }
+            } else {
+                return Err(anyhow!("{path:?} not valid or does not exist"));
+            }
+        }
+    } else {
+        return Err(anyhow!("{directory:?} not valid or does not exist"));
+    }
+    println!("asdf 1");
+    Ok((paths, filesizes))
 }
 
 // TODO Maybe make this a result type.
