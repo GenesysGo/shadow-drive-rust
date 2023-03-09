@@ -11,7 +11,7 @@ use sha2::{Digest, Sha256};
 
 pub mod inscribe;
 
-pub use chain_drive::{program::ChainDrive, ClockworkInstructionData};
+pub use chain_drive::{self, program::ChainDrive, ClockworkInstructionData};
 
 #[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone, CheckBytes)]
 #[archive(compare(PartialEq))]
