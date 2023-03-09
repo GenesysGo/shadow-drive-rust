@@ -27,9 +27,7 @@ pub struct Rune {
 }
 
 #[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone)]
-// This will generate a PartialEq impl between our unarchived and archived types
 #[archive(compare(PartialEq))]
-// To use the safe API, you have to derive CheckBytes for the archived type
 #[archive_attr(derive(CheckBytes, Debug))]
 pub struct Runes {
     pub storage_account: [u8; 32],
@@ -63,9 +61,6 @@ impl Runes {
     pub fn save(self, mut target: PathBuf) -> Result<(), RunesError> {
         // Serialize
         let bytes = rkyv::to_bytes::<_, 256>(&self).unwrap();
-        // let mut serializer = AllocSerializer::<0>::default();
-        // serializer.serialize_value(&self).unwrap();
-        // let bytes = serializer.into_serializer().into_inner();
 
         // Save to file
         target.set_extension("runes");
@@ -157,9 +152,7 @@ fn test_rune() {
     println!("{bytes:?}");
 
     // Or you can use the unsafe API for maximum performance
-    // let start = std::time::Instant::now();
     let archived = unsafe { rkyv::archived_root::<Rune>(&bytes[..]) };
-    // println!("{} nanos", start.elapsed().as_nanos());
     assert_eq!(archived, &rune);
 }
 
@@ -206,32 +199,4 @@ fn test_two_runes() {
     let bytes = rkyv::to_bytes::<_, 256>(&runes).unwrap();
     let archived = unsafe { rkyv::archived_root::<Runes>(&bytes[..]) };
     assert_eq!(archived, &runes);
-}
-
-// fn test_asdf() {
-// let values = Runes {
-//     key: [0; 32],
-//     runes: vec![value.clone(), value],
-// };
-
-// // Serializing is as easy as a single function call
-// let bytes = rkyv::to_bytes::<_, 256>(&values).unwrap();
-// println!("{bytes:?}");
-
-// // Or you can customize your serialization for better performance
-// // and compatibility with #![no_std] environments
-// use rkyv::ser::{serializers::AllocSerializer, Serializer};
-
-// let mut serializer = AllocSerializer::<0>::default();
-// serializer.serialize_value(&values).unwrap();
-// let bytes = serializer.into_serializer().into_inner();
-
-// // You can use the safe API for fast zero-copy deserialization
-// // let archived = rkyv::check_archived_root::<Test>(&bytes[..]).unwrap();
-// // assert_eq!(archived, &value);
-// }
-
-#[test]
-fn test_save() {
-    todo!()
 }
