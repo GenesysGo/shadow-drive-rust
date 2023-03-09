@@ -80,8 +80,8 @@ impl ArchivedRunes {
         name: &str,
         summoner: impl ToAccountInfo<'info>,
         metadata: impl ToAccountInfo<'info>,
-        system_program: &'info Program<'info, System>,
-        portal_program: &'info Program<'info, ChainDrive>,
+        system_program: &Program<'info, System>,
+        portal_program: &Program<'info, ChainDrive>,
         signer_seeds: Option<&[&[&[u8]]]>,
         callback: Option<ClockworkInstructionData>,
     ) {
