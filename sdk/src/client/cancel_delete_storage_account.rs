@@ -8,12 +8,11 @@ use solana_sdk::{
 };
 
 use super::ShadowDriveClient;
-use crate::models::storage_acct::StorageAcct;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
     derived_addresses,
     models::{
-        storage_acct::{StorageAccount, StorageAccountV2},
+        storage_acct::{StorageAccount, StorageAccountV2, StorageAcct},
         *,
     },
 };

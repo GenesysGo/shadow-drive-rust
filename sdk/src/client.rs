@@ -1,9 +1,12 @@
-use serde::de::DeserializeOwned;
 use std::time::Duration;
 
+use anchor_lang::{prelude::Pubkey, AnchorDeserialize};
+use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
+use shadow_drive_user_staking::instructions::initialize_config::StorageConfig;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer, transaction::Transaction};
+use spl_associated_token_account::get_associated_token_address;
 
 mod add_immutable_storage;
 mod add_storage;
@@ -39,7 +42,7 @@ pub use reduce_storage::*;
 pub use store_files::*;
 
 use crate::{
-    constants::SHDW_DRIVE_ENDPOINT,
+    constants::{SHDW_DRIVE_ENDPOINT, TOKEN_MINT},
     error::Error,
     models::{FileDataResponse, ShadowDriveResult},
 };
@@ -162,6 +165,36 @@ where
         let response = response.json::<K>().await?;
 
         Ok(response)
+    }
+
+    pub async fn get_storage_price_and_min_account_size(&self) -> ShadowDriveResult<(u64, u64)> {
+        let info_pubkey = Pubkey::find_program_address(
+            &["storage-config".as_bytes()],
+            &shadow_drive_user_staking::ID,
+        )
+        .0;
+        let config = StorageConfig::deserialize(
+            &mut self.rpc_client.get_account_data(&info_pubkey).await?[8..].as_ref(),
+        )?;
+
+        Ok((config.shades_per_gib, config.min_account_size))
+    }
+
+    pub async fn get_shdw_balance(&self) -> ShadowDriveResult<u64> {
+        let shdw_pubkey = get_associated_token_address(&self.wallet.pubkey(), &TOKEN_MINT);
+        let balance: u64 = self
+            .rpc_client
+            .get_token_account_balance(&shdw_pubkey)
+            .await?
+            .amount
+            .parse()
+            .unwrap();
+
+        Ok(balance)
+    }
+
+    pub fn rpc(&self) -> &RpcClient {
+        &self.rpc_client
     }
 }
 

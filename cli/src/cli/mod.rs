@@ -1,10 +1,10 @@
 pub mod process;
 
 use std::path::PathBuf;
+
 use byte_unit::Byte;
 use clap::Parser;
-use shadow_drive_cli::FILE_UPLOAD_BATCH_SIZE;
-use shadow_drive_cli::{parse_filesize, pubkey_arg};
+use shadow_drive_cli::{parse_filesize, pubkey_arg, FILE_UPLOAD_BATCH_SIZE};
 use solana_sdk::pubkey::Pubkey;
 
 /// Manually specify a cluster url and/or keypair.
@@ -186,5 +186,11 @@ pub enum Command {
         /// A list of one or more filepaths, each of which is to be uploaded.
         #[clap(min_values = 1)]
         files: Vec<PathBuf>,
+    },
+    /// Creates an archive of metadata (runes) that can be used to summon data using the Shadow Drive Portal. Uploads data, and returns
+    /// the metadata to be compiled into a smart contract.
+    StoreAndCreateRunes {
+        directory: PathBuf,
+        target: PathBuf,
     },
 }

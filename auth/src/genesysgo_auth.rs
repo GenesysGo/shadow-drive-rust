@@ -1,8 +1,7 @@
 use anyhow::anyhow;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use solana_sdk::bs58;
-use solana_sdk::signature::Signer;
+use solana_sdk::{bs58, signature::Signer};
 
 const SIGNIN_MSG: &str = "Sign in to GenesysGo Shadow Platform.";
 const PORTAL_SIGNIN_URL: &str = "https://portal.genesysgo.net/api/signin";

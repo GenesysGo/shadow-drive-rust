@@ -29,3 +29,6 @@ serde = "1.0.145"
 serde_json = "1.0.86"
 clap = { version = "3.1.18", features = [ "derive" ] }
 solana-clap-v3-utils = "1.14.11"
+rkyv = { version = "0.7.40", features = ["validation"] }
+bytecheck = "0.7.0"
+runes = { path = "../runes" }
