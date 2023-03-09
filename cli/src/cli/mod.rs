@@ -190,7 +190,6 @@ pub enum Command {
     /// Creates an archive of metadata (runes) that can be used to summon data using the Shadow Drive Portal. Uploads data, and returns
     /// the metadata to be compiled into a smart contract.
     StoreAndCreateRunes {
-        // #[clap()]
         directory: PathBuf,
         target: PathBuf,
     },
