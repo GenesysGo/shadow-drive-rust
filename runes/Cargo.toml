@@ -11,5 +11,5 @@ bytecheck = "0.7.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
 rkyv = { version = "0.7.40", features = ["validation", "strict"] }
-chain-drive = { git = "https://github.com/GenesysGo/shadow-drive-clockwork.git", features = ["cpi"]}
+chain-drive = { git = "https://github.com/GenesysGo/shadow-drive-clockwork.git", features = ["cpi", "no-entrypoint"]}
 sha2 = "0.10.6"
