@@ -278,33 +278,28 @@ impl Command {
                 }
             }
             Command::StoreAndCreateRunes { directory, target } => {
-                println!("you requested to make runes using {directory:?}");
 
                 // Get the paths and sizes of files in the given directory
                 // NOTE: this checks that all file sizes are under MAX_FILE_SIZE
                 let (paths, filesizes) = get_paths_and_sizes(&directory)?;
                 let total_bytes = filesizes.iter().sum::<usize>() as u64;
 
-                // check if target exists
+                // Check if target exists
                 if target.exists() {
                     return Err(anyhow!("{target:?} already exists"));
                 }
-                if let Some(parent) = dbg!(target.parent()) {
-                    // TODO: handle
+                if let Some(parent) = target.parent() {
                     if !parent.eq(Path::new("")) {
                         fs::create_dir_all(parent);
                     }
                 }
-                println!("if we don't get here rust is broken");
 
-                // check enough shdw
+                // Check user has enough SHDW
                 let client = ShadowDriveClient::new(signer, rpc_url);
-                println!("made client");
                 let (storage_price, min_size) = client
                     .get_storage_price_and_min_account_size()
                     .await
                     .map_err(|e| anyhow!("{e:?}"))?;
-                println!("got price");
 
                 let cost: u64 = (total_bytes.max(min_size) as u128)
                     .checked_mul(storage_price as u128)
@@ -313,13 +308,11 @@ impl Command {
                     .unwrap()
                     .try_into()
                     .unwrap();
-                println!("got cost");
 
                 let balance: u64 = client
                     .get_shdw_balance()
                     .await
                     .map_err(|e| anyhow!("{e:?}"))?;
-                println!("got balance");
 
                 if cost > balance {
                     return Err(anyhow!(
@@ -327,12 +320,8 @@ impl Command {
                     ));
                 }
 
-                // make storage account
-                println!("target name");
+                // Create storage account with target name
                 let target_name = target.file_name().unwrap().to_string_lossy();
-                println!("target name2");
-
-                // use std::borrow::Borrow;
                 let response = client
                     .create_storage_account(
                         &target_name,
@@ -340,12 +329,10 @@ impl Command {
                         StorageAccountVersion::V2,
                     )
                     .await;
-                // TODO: graceful error handling
                 let storage_account: Pubkey =
                     Pubkey::from_str(&process_shadow_api_response(response)?.shdw_bucket.unwrap())
                         .unwrap();
-                // todo alert user of success
-                println!("created storage account");
+                println!("Created storage account");
 
                 // Load all filedata
                 let (filedata, filenames): (Vec<Vec<u8>>, Vec<String>) = paths
@@ -363,7 +350,7 @@ impl Command {
                     })
                     .unzip();
 
-                // make runes
+                // Generate runes
                 let runes = Runes::new(
                     storage_account.to_bytes(),
                     filenames.clone(),
@@ -371,7 +358,7 @@ impl Command {
                     filesizes.clone(),
                 );
 
-                // upload data to account
+                // Upload data to account
                 let shadow_files: Vec<ShadowFile> = filedata
                     .into_iter()
                     .zip(filenames)
@@ -380,8 +367,9 @@ impl Command {
                 process_shadow_api_response(
                     client.store_files(&storage_account, shadow_files).await,
                 )?;
+                println!("Uploaded data to Shadow Drive.");
 
-                // save runes
+                // Save runes to disk
                 runes
                     .save(target)
                     .map_err(|e| anyhow!("failed to save runes {e:?}"))?;
@@ -415,7 +403,6 @@ fn get_paths_and_sizes(directory: &PathBuf) -> anyhow::Result<(Vec<PathBuf>, Vec
     } else {
         return Err(anyhow!("{directory:?} not valid or does not exist"));
     }
-    println!("asdf 1");
     Ok((paths, filesizes))
 }
 
