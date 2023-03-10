@@ -79,11 +79,14 @@ impl ArchivedRunes {
         &self,
         name: &str,
         summoner: impl ToAccountInfo<'info>,
+        payer: impl ToAccountInfo<'info>,
         metadata: impl ToAccountInfo<'info>,
         system_program: &Program<'info, System>,
         portal_program: &Program<'info, ChainDrive>,
         signer_seeds: Option<&[&[&[u8]]]>,
         callback: Option<ClockworkInstructionData>,
+        extra_lamports: u64,
+        unique_thread: u64,
     ) {
         self.get_rune(name).map(|rune| {
             let summoner_info = summoner.to_account_info();
@@ -93,6 +96,7 @@ impl ArchivedRunes {
                         portal_program.to_account_info(),
                         chain_drive::cpi::accounts::Summon {
                             summoner: summoner_info,
+                            payer: payer.to_account_info(),
                             metadata: metadata.to_account_info(),
                             system_program: system_program.to_account_info(),
                         },
@@ -103,6 +107,7 @@ impl ArchivedRunes {
                         portal_program.to_account_info(),
                         chain_drive::cpi::accounts::Summon {
                             summoner: summoner_info,
+                            payer: payer.to_account_info(),
                             metadata: metadata.to_account_info(),
                             system_program: system_program.to_account_info(),
                         },
@@ -118,8 +123,10 @@ impl ArchivedRunes {
                 cpi_ctx,
                 Pubkey::new_from_array(self.storage_account),
                 rune.name.to_string(),
-                rune.len as usize + callback_len,
+                rune.len as usize + callback_len + 100, // TODO remove 100
                 rune.hash,
+                extra_lamports,
+                unique_thread,
                 callback,
             );
         });
