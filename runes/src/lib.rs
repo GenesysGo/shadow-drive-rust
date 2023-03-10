@@ -3,7 +3,7 @@ use std::{io::Write, path::PathBuf};
 use anchor_lang::{
     prelude::{CpiContext, Program, Pubkey},
     system_program::System,
-    ToAccountInfo,
+    AnchorSerialize, ToAccountInfo,
 };
 use itertools::multizip;
 use rkyv::{Archive, CheckBytes, Deserialize, Serialize};
@@ -109,11 +109,16 @@ impl ArchivedRunes {
                     )
                 }
             };
+
+            let callback_len = callback
+                .as_ref()
+                .map(|cb| 8 + 34 * cb.accounts.len() + cb.data.len() + 32)
+                .unwrap_or(0);
             chain_drive::cpi::summon(
                 cpi_ctx,
                 Pubkey::new_from_array(self.storage_account),
                 rune.name.to_string(),
-                rune.len as usize,
+                rune.len as usize + callback_len,
                 rune.hash,
                 callback,
             );
