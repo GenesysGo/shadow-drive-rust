@@ -3,7 +3,7 @@ use std::{io::Write, path::PathBuf};
 use anchor_lang::{
     prelude::{CpiContext, Program, Pubkey},
     system_program::System,
-    AnchorSerialize, ToAccountInfo,
+    ToAccountInfo,
 };
 use itertools::multizip;
 use rkyv::{Archive, CheckBytes, Deserialize, Serialize};
@@ -15,7 +15,8 @@ pub use chain_drive::{self, program::ChainDrive, ClockworkInstructionData};
 
 #[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone, CheckBytes)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes, Debug))]
+#[archive_attr(derive(rkyv::CheckBytes, Debug))]
+#[repr(align(8))]
 pub struct Rune {
     pub name: String,
     pub len: u16,
@@ -24,7 +25,8 @@ pub struct Rune {
 
 #[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes, Debug))]
+#[archive_attr(derive(rkyv::CheckBytes, Debug))]
+#[repr(align(8))]
 pub struct Runes {
     pub storage_account: [u8; 32],
     pub runes: Vec<Rune>,
@@ -123,7 +125,7 @@ impl ArchivedRunes {
                 cpi_ctx,
                 Pubkey::new_from_array(self.storage_account),
                 rune.name.to_string(),
-                rune.len as usize + callback_len + 100, // TODO remove 100
+                rune.len as usize + callback_len,
                 rune.hash,
                 extra_lamports,
                 unique_thread,

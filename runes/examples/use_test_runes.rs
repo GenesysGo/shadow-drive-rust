@@ -1,6 +1,6 @@
 use runes::{inscribe_runes, Rune, Runes};
 
-inscribe_runes!("../aidan.runes");
+inscribe_runes!("./aidan.runes");
 
 fn main() {
     let expected = Runes {
@@ -18,7 +18,7 @@ fn main() {
         }],
     };
 
-    let runes = unsafe { get_runes() };
+    let runes = unsafe { get_runes_unchecked() };
     assert_eq!(runes, &expected);
     let rune = runes.get_rune("Aidan Tooty").unwrap();
     println!("{rune:?}");

@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anchor-lang = "0.26.0"
-bytecheck = "0.7.0"
+bytecheck = "0.6.10"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
 rkyv = { version = "0.7.40", features = ["validation", "strict"] }
