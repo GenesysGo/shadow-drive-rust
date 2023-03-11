@@ -1,25 +1,22 @@
 use std::{io::Write, path::PathBuf};
 
 use anchor_lang::{
-    prelude::{AccountInfo, CpiContext, Program, Pubkey},
+    prelude::{CpiContext, Program, Pubkey},
     system_program::System,
     ToAccountInfo,
 };
-use chain_drive::{
-    instructions::summon::DataToBeSummoned, program::ChainDrive, ClockworkInstructionData,
-};
 use itertools::multizip;
-use rkyv::{
-    ser::{serializers::AllocSerializer, Serializer},
-    Archive, CheckBytes, Deserialize, Serialize,
-};
+use rkyv::{Archive, CheckBytes, Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 pub mod inscribe;
 
+pub use chain_drive::{self, program::ChainDrive, ClockworkInstructionData};
+
 #[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone, CheckBytes)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes, Debug))]
+#[archive_attr(derive(rkyv::CheckBytes, Debug))]
+#[repr(align(8))]
 pub struct Rune {
     pub name: String,
     pub len: u16,
@@ -28,7 +25,8 @@ pub struct Rune {
 
 #[derive(Archive, Deserialize, Serialize, Debug, PartialEq, Clone)]
 #[archive(compare(PartialEq))]
-#[archive_attr(derive(CheckBytes, Debug))]
+#[archive_attr(derive(rkyv::CheckBytes, Debug))]
+#[repr(align(8))]
 pub struct Runes {
     pub storage_account: [u8; 32],
     pub runes: Vec<Rune>,
@@ -83,11 +81,14 @@ impl ArchivedRunes {
         &self,
         name: &str,
         summoner: impl ToAccountInfo<'info>,
+        payer: impl ToAccountInfo<'info>,
         metadata: impl ToAccountInfo<'info>,
-        system_program: Program<'info, System>,
-        portal_program: Program<'info, ChainDrive>,
+        system_program: &Program<'info, System>,
+        portal_program: &Program<'info, ChainDrive>,
         signer_seeds: Option<&[&[&[u8]]]>,
         callback: Option<ClockworkInstructionData>,
+        extra_lamports: u64,
+        unique_thread: u64,
     ) {
         self.get_rune(name).map(|rune| {
             let summoner_info = summoner.to_account_info();
@@ -97,6 +98,7 @@ impl ArchivedRunes {
                         portal_program.to_account_info(),
                         chain_drive::cpi::accounts::Summon {
                             summoner: summoner_info,
+                            payer: payer.to_account_info(),
                             metadata: metadata.to_account_info(),
                             system_program: system_program.to_account_info(),
                         },
@@ -107,18 +109,26 @@ impl ArchivedRunes {
                         portal_program.to_account_info(),
                         chain_drive::cpi::accounts::Summon {
                             summoner: summoner_info,
+                            payer: payer.to_account_info(),
                             metadata: metadata.to_account_info(),
                             system_program: system_program.to_account_info(),
                         },
                     )
                 }
             };
+
+            let callback_len = callback
+                .as_ref()
+                .map(|cb| 8 + 34 * cb.accounts.len() + cb.data.len() + 32)
+                .unwrap_or(0);
             chain_drive::cpi::summon(
                 cpi_ctx,
                 Pubkey::new_from_array(self.storage_account),
                 rune.name.to_string(),
-                rune.len as usize,
+                rune.len as usize + callback_len,
                 rune.hash,
+                extra_lamports,
+                unique_thread,
                 callback,
             );
         });
