@@ -6,10 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anchor-lang = "0.26.0"
 bytecheck = "0.6.10"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
 rkyv = { version = "0.7.40", features = ["validation", "strict"] }
-chain-drive = { git = "https://github.com/GenesysGo/shadow-drive-clockwork.git", features = ["cpi", "no-entrypoint"]}
 sha2 = "0.10.6"

@@ -790,18 +790,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "chain-drive"
-version = "0.1.0"
-source = "git+https://github.com/GenesysGo/shadow-drive-clockwork.git#9d117d4c69811f93ef5d32cfd6cf0b33361a769b"
-dependencies = [
- "anchor-lang",
- "chrono",
- "clockwork-cron",
- "clockwork-sdk",
- "sha2 0.10.6",
-]
-
-[[package]]
 name = "chrono"
 version = "0.4.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -888,74 +876,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
 dependencies = [
  "os_str_bytes",
-]
-
-[[package]]
-name = "clockwork-cron"
-version = "1.4.2"
-source = "git+https://github.com/genesysgo/clockwork.git?branch=sdrive#d1fff8e4f265b805a8ae814bf4d6f22ae8f0c238"
-dependencies = [
- "chrono",
- "nom",
- "once_cell",
-]
-
-[[package]]
-name = "clockwork-macros"
-version = "1.4.0"
-source = "git+https://github.com/genesysgo/clockwork.git?branch=sdrive#d1fff8e4f265b805a8ae814bf4d6f22ae8f0c238"
-dependencies = [
- "proc-macro2 1.0.51",
- "quote 1.0.23",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "clockwork-network-program"
-version = "1.4.2"
-source = "git+https://github.com/genesysgo/clockwork.git?branch=sdrive#d1fff8e4f265b805a8ae814bf4d6f22ae8f0c238"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "clockwork-macros",
- "clockwork-utils",
-]
-
-[[package]]
-name = "clockwork-sdk"
-version = "1.4.2"
-source = "git+https://github.com/genesysgo/clockwork.git?branch=sdrive#d1fff8e4f265b805a8ae814bf4d6f22ae8f0c238"
-dependencies = [
- "anchor-lang",
- "chrono",
- "clockwork-thread-program",
- "nom",
- "once_cell",
-]
-
-[[package]]
-name = "clockwork-thread-program"
-version = "1.4.2"
-source = "git+https://github.com/genesysgo/clockwork.git?branch=sdrive#d1fff8e4f265b805a8ae814bf4d6f22ae8f0c238"
-dependencies = [
- "anchor-lang",
- "chrono",
- "clockwork-cron",
- "clockwork-macros",
- "clockwork-network-program",
- "clockwork-utils",
- "static-pubkey",
- "version",
-]
-
-[[package]]
-name = "clockwork-utils"
-version = "1.4.2"
-source = "git+https://github.com/genesysgo/clockwork.git?branch=sdrive#d1fff8e4f265b805a8ae814bf4d6f22ae8f0c238"
-dependencies = [
- "anchor-lang",
- "base64 0.13.1",
- "static-pubkey",
 ]
 
 [[package]]
@@ -3199,9 +3119,7 @@ dependencies = [
 name = "runes"
 version = "0.1.0"
 dependencies = [
- "anchor-lang",
- "bytecheck 0.7.0",
- "chain-drive",
+ "bytecheck 0.6.10",
  "itertools",
  "lazy_static",
  "rkyv",
@@ -4599,18 +4517,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "static-pubkey"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0547d5945c93f55e1b18bf2a67d1a3d0548561f2687645b22c1c1d4fbb9a8e90"
-dependencies = [
- "bs58 0.4.0",
- "proc-macro2 1.0.51",
- "quote 1.0.23",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "strsim"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5139,12 +5045,6 @@ name = "vec_map"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
-
-[[package]]
-name = "version"
-version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a449064fee414fcc201356a3e6c1510f6c8829ed28bb06b91c54ebe208ce065"
 
 [[package]]
 name = "version_check"
