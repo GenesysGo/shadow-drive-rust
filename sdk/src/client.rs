@@ -166,36 +166,6 @@ where
 
         Ok(response)
     }
-
-    pub async fn get_storage_price_and_min_account_size(&self) -> ShadowDriveResult<(u64, u64)> {
-        let info_pubkey = Pubkey::find_program_address(
-            &["storage-config".as_bytes()],
-            &shadow_drive_user_staking::ID,
-        )
-        .0;
-        let config = StorageConfig::deserialize(
-            &mut self.rpc_client.get_account_data(&info_pubkey).await?[8..].as_ref(),
-        )?;
-
-        Ok((config.shades_per_gib, config.min_account_size))
-    }
-
-    pub async fn get_shdw_balance(&self) -> ShadowDriveResult<u64> {
-        let shdw_pubkey = get_associated_token_address(&self.wallet.pubkey(), &TOKEN_MINT);
-        let balance: u64 = self
-            .rpc_client
-            .get_token_account_balance(&shdw_pubkey)
-            .await?
-            .amount
-            .parse()
-            .unwrap();
-
-        Ok(balance)
-    }
-
-    pub fn rpc(&self) -> &RpcClient {
-        &self.rpc_client
-    }
 }
 
 pub(crate) fn serialize_and_encode(txn: &Transaction) -> ShadowDriveResult<String> {
