@@ -1,5 +1,6 @@
 [package]
 name = "shadow-rpc-auth"
+description = "Authenticate against RPCs that require JWT auth headers"
 version = { workspace = true }
 authors = { workspace = true }
 edition = { workspace = true }
