@@ -1,18 +1,15 @@
-use std::{io::stdin, str::FromStr};
-
 use anyhow::anyhow;
 use byte_unit::Byte;
+use reqwest::header::HeaderMap;
+use reqwest::Response;
+use shadow_drive_sdk::error::{Error, FileError};
+use shadow_drive_sdk::models::ShadowDriveResult;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::{Signature, Signer, SignerError};
+use std::io::stdin;
+use std::str::FromStr;
 use chrono::DateTime;
-use reqwest::{header::HeaderMap, Response};
-use shadow_drive_sdk::{
-    constants::SHDW_DRIVE_OBJECT_PREFIX,
-    error::{Error, FileError},
-    models::ShadowDriveResult,
-};
-use solana_sdk::{
-    pubkey::Pubkey,
-    signature::{Signature, Signer, SignerError},
-};
+use shadow_drive_sdk::constants::SHDW_DRIVE_OBJECT_PREFIX;
 
 /// Maximum amount of files to batch into a single [store_files] request.
 pub const FILE_UPLOAD_BATCH_SIZE: usize = 5;
@@ -125,12 +122,10 @@ pub struct FileMetadata {
 impl FileMetadata {
     pub fn from_headers(h: &HeaderMap) -> anyhow::Result<Self> {
         let getter = |key| {
-            Ok::<_, anyhow::Error>(
-                h.get(key)
-                    .ok_or(anyhow!("Missing file metadata header: {}", key))?
-                    .to_str()?
-                    .to_string(),
-            )
+            Ok::<_, anyhow::Error>(h.get(key)
+              .ok_or(anyhow!("Missing file metadata header: {}", key))?
+              .to_str()?
+              .to_string())
         };
         let parse_timestamp = |key| {
             let timestamp = getter(key)?;
@@ -149,6 +144,7 @@ impl FileMetadata {
         })
     }
 }
+
 
 /// Pulls "last-modified" from [HeaderMap], unaltered.
 pub fn last_modified(headers: &HeaderMap) -> anyhow::Result<String> {
