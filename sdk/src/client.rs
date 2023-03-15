@@ -1,12 +1,9 @@
+use serde::de::DeserializeOwned;
 use std::time::Duration;
 
-use anchor_lang::{prelude::Pubkey, AnchorDeserialize};
-use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
-use shadow_drive_user_staking::instructions::initialize_config::StorageConfig;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{commitment_config::CommitmentConfig, signer::Signer, transaction::Transaction};
-use spl_associated_token_account::get_associated_token_address;
 
 mod add_immutable_storage;
 mod add_storage;
@@ -42,7 +39,7 @@ pub use reduce_storage::*;
 pub use store_files::*;
 
 use crate::{
-    constants::{SHDW_DRIVE_ENDPOINT, TOKEN_MINT},
+    constants::SHDW_DRIVE_ENDPOINT,
     error::Error,
     models::{FileDataResponse, ShadowDriveResult},
 };

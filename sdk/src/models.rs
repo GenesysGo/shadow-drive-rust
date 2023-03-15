@@ -1,21 +1,20 @@
-use std::path::Path;
-
 use bytes::Bytes;
 use reqwest::multipart::Part;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
+use std::path::Path;
+use tokio::{fs::File, io::AsyncReadExt};
+
 //re-export structs from Shadow Drive Smart Contract that are used in the SDK
 pub use shadow_drive_user_staking::instructions::{
     decrease_storage::UnstakeInfo, initialize_account::UserInfo, store_file::File as FileAccount,
 };
-use tokio::{fs::File, io::AsyncReadExt};
 
 pub mod payload;
 pub mod storage_acct;
 
-use payload::Payload;
-
 use crate::{constants::FILE_SIZE_LIMIT, error::Error};
+use payload::Payload;
 
 pub type ShadowDriveResult<T> = Result<T, Error>;
 

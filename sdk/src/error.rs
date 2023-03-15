@@ -1,9 +1,9 @@
-use std::io::Error as IoError;
-
 use anchor_lang::error::Error as AnchorError;
 use reqwest::Error as ReqwestError;
 use solana_client::client_error::ClientError;
-use solana_sdk::{pubkey::ParsePubkeyError, signer::SignerError};
+use solana_sdk::pubkey::ParsePubkeyError;
+use solana_sdk::signer::SignerError;
+use std::io::Error as IoError;
 use tokio::task::JoinError;
 
 #[derive(Debug)]

@@ -1,11 +1,9 @@
 use anchor_lang::{system_program, AccountDeserialize, InstructionData, ToAccountMetas};
 use byte_unit::Byte;
 use serde_json::{json, Value};
-use shadow_drive_user_staking::{
-    accounts as shdw_drive_accounts,
-    instruction::{InitializeAccount, InitializeAccount2},
-    instructions::initialize_account::UserInfo,
-};
+use shadow_drive_user_staking::instruction::InitializeAccount;
+use shadow_drive_user_staking::instructions::initialize_account::UserInfo;
+use shadow_drive_user_staking::{accounts as shdw_drive_accounts, instruction::InitializeAccount2};
 use solana_client::{
     client_error::{ClientError, ClientErrorKind},
     rpc_request::RpcError,
