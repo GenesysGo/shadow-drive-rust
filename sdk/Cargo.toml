@@ -34,3 +34,4 @@ reqwest = {version = "^0.11", features = ["multipart", "stream"]}
 tokio = {version = "^1", features = ["rt", "fs", "io-util"]}
 tracing = "^0.1"
 sodalite = "0.4.0"
+infer = "0.13.0"

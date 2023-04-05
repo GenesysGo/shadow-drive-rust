@@ -49,23 +49,30 @@ pub struct DeleteFileResponse {
 pub struct ShadowFile {
     pub name: String,
     pub data: Payload,
-    content_type: Option<String>,
+    content_type: String,
 }
+
+const FALLBACK_MIMETYPE: &'static str = "application/octet-stream";
 
 impl ShadowFile {
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    pub fn with_content_type(mut self, content_type: String) -> Self {
-        self.content_type = Some(content_type);
-        self
-    }
-
     pub fn file<T: AsRef<Path>>(name: String, path: T) -> Self {
+        let content_type = match infer::get_from_path(path.as_ref()) {
+            // Successfully read file, fallback if infer fails
+            Ok(mime_option) => mime_option
+                .map(|mime| mime.mime_type())
+                .unwrap_or(FALLBACK_MIMETYPE)
+                .to_owned(),
+
+            // Fallback value
+            Err(_) => FALLBACK_MIMETYPE.to_owned(),
+        };
         Self {
             name,
-            content_type: None,
+            content_type,
             data: Payload::File(path.as_ref().to_owned()),
         }
     }
@@ -73,7 +80,7 @@ impl ShadowFile {
     pub fn bytes<T: Into<Bytes>>(name: String, data: T) -> Self {
         Self {
             name,
-            content_type: None,
+            content_type: FALLBACK_MIMETYPE.to_owned(),
             data: Payload::Bytes(data.into()),
         }
     }
@@ -130,9 +137,7 @@ impl ShadowFile {
             }
         };
 
-        if let Some(content_type) = self.content_type {
-            part = part.mime_str(&content_type)?;
-        };
+        part = part.mime_str(&self.content_type)?;
         Ok(part)
     }
 }
