@@ -1,5 +1,6 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use byte_unit::Byte;
+use serde_json::{json, Value};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
 use solana_sdk::sysvar::rent;
@@ -10,6 +11,7 @@ use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as TokenProgramID;
 
 use super::ShadowDriveClient;
+use crate::constants::SHDW_DRIVE_ENDPOINT;
 use crate::{
     constants::{EMISSIONS, PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT, UPLOADER},
     derived_addresses,
@@ -67,14 +69,43 @@ where
 
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
 
+        let response = self
+            .http_client
+            .get(format!(
+                "{}/bucket-size?storageAccount=",
+                SHDW_DRIVE_ENDPOINT
+            ))
+            .header("Content-Type", "application/json")
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(Error::ShadowDriveServerError {
+                status: response.status().as_u16(),
+                message: response.json::<Value>().await?,
+            });
+        }
+
+        let response = response.json::<GetBucketSizeResponse>().await?;
+
         let txn_encoded = match selected_storage_acct {
             StorageAcct::V1(storage_account) => {
-                self.reduce_storage_v1(storage_account_key, storage_account, size_as_bytes)
-                    .await?
+                self.reduce_storage_v1(
+                    storage_account_key,
+                    storage_account,
+                    size_as_bytes,
+                    response.storageUsed,
+                )
+                .await?
             }
             StorageAcct::V2(storage_account) => {
-                self.reduce_storage_v2(storage_account_key, storage_account, size_as_bytes)
-                    .await?
+                self.reduce_storage_v2(
+                    storage_account_key,
+                    storage_account,
+                    size_as_bytes,
+                    response.storageUsed,
+                )
+                .await?
             }
         };
 
@@ -86,6 +117,7 @@ where
         storage_account_key: &Pubkey,
         storage_account: StorageAccount,
         size_as_bytes: u64,
+        storage_used: u64,
     ) -> ShadowDriveResult<String> {
         let wallet_pubkey = self.wallet.pubkey();
         let (unstake_account, _) = derived_addresses::unstake_account(storage_account_key);
@@ -113,6 +145,7 @@ where
         };
         let args = shdw_drive_instructions::DecreaseStorage {
             remove_storage: size_as_bytes,
+            storage_used: storage_used,
         };
 
         let instruction = Instruction {
@@ -137,6 +170,7 @@ where
         storage_account_key: &Pubkey,
         storage_account: StorageAccountV2,
         size_as_bytes: u64,
+        storage_used: u64,
     ) -> ShadowDriveResult<String> {
         let wallet_pubkey = self.wallet.pubkey();
         let (unstake_account, _) = derived_addresses::unstake_account(storage_account_key);
@@ -164,6 +198,7 @@ where
         };
         let args = shdw_drive_instructions::DecreaseStorage2 {
             remove_storage: size_as_bytes,
+            storage_used: storage_used,
         };
 
         let instruction = Instruction {

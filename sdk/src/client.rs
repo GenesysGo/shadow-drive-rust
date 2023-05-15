@@ -19,6 +19,7 @@ mod make_storage_immutable;
 mod migrate;
 mod redeem_rent;
 mod reduce_storage;
+mod refresh_stake;
 mod store_files;
 // mod upload_multiple_files;
 
@@ -36,12 +37,13 @@ pub use make_storage_immutable::*;
 pub use migrate::*;
 pub use redeem_rent::*;
 pub use reduce_storage::*;
+pub use refresh_stake::*;
 pub use store_files::*;
 
 use crate::{
     constants::SHDW_DRIVE_ENDPOINT,
     error::Error,
-    models::{FileDataResponse, ShadowDriveResult},
+    models::{FileDataResponse, GetBucketSizeResponse, ShadowDriveResult},
 };
 
 /// Client that allows a user to interact with the Shadow Drive.
@@ -129,6 +131,31 @@ where
         }
 
         let response = response.json::<FileDataResponse>().await?;
+
+        Ok(response)
+    }
+    pub async fn get_bucket_size(
+        &self,
+        storage_account: &str,
+    ) -> ShadowDriveResult<GetBucketSizeResponse> {
+        let response = self
+            .http_client
+            .get(format!(
+                "{}/bucket-size?storageAccount=",
+                SHDW_DRIVE_ENDPOINT
+            ))
+            .header("Content-Type", "application/json")
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(Error::ShadowDriveServerError {
+                status: response.status().as_u16(),
+                message: response.json::<Value>().await?,
+            });
+        }
+
+        let response = response.json::<GetBucketSizeResponse>().await?;
 
         Ok(response)
     }

@@ -1,4 +1,5 @@
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
+use serde_json::{json, Value};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
 use solana_sdk::sysvar::rent;
@@ -9,9 +10,12 @@ use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as TokenProgramID;
 
 use super::ShadowDriveClient;
+use crate::constants::SHDW_DRIVE_ENDPOINT;
+use crate::models::GetBucketSizeResponse;
 use crate::{
     constants::{EMISSIONS, PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT, UPLOADER},
     derived_addresses,
+    error::Error,
     models::{
         storage_acct::{StorageAccount, StorageAccountV2, StorageAcct},
         ShadowDriveResult, StorageResponse,
@@ -54,15 +58,40 @@ where
         storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<StorageResponse> {
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
+        let response = self
+            .http_client
+            .get(format!(
+                "{}/bucket-size?storageAccount=",
+                SHDW_DRIVE_ENDPOINT
+            ))
+            .header("Content-Type", "application/json")
+            .send()
+            .await?;
 
+        if !response.status().is_success() {
+            return Err(Error::ShadowDriveServerError {
+                status: response.status().as_u16(),
+                message: response.json::<Value>().await?,
+            });
+        }
+
+        let response = response.json::<GetBucketSizeResponse>().await?;
         let txn_encoded = match selected_storage_acct {
             StorageAcct::V1(storage_account) => {
-                self.make_storage_immutable_v1(storage_account_key, storage_account)
-                    .await?
+                self.make_storage_immutable_v1(
+                    storage_account_key,
+                    storage_account,
+                    response.storageUsed,
+                )
+                .await?
             }
             StorageAcct::V2(storage_account) => {
-                self.make_storage_immutable_v2(storage_account_key, storage_account)
-                    .await?
+                self.make_storage_immutable_v2(
+                    storage_account_key,
+                    storage_account,
+                    response.storageUsed,
+                )
+                .await?
             }
         };
 
@@ -73,6 +102,7 @@ where
         &self,
         storage_account_key: &Pubkey,
         storage_account: StorageAccount,
+        storage_used: u64,
     ) -> ShadowDriveResult<String> {
         let wallet_pubkey = self.wallet.pubkey();
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
@@ -94,7 +124,9 @@ where
             rent: rent::ID,
         };
 
-        let args = shdw_drive_instructions::MakeAccountImmutable {};
+        let args = shdw_drive_instructions::MakeAccountImmutable {
+            storage_used: storage_used,
+        };
 
         let instruction = Instruction {
             program_id: PROGRAM_ADDRESS,
@@ -118,6 +150,7 @@ where
         &self,
         storage_account_key: &Pubkey,
         storage_account: StorageAccountV2,
+        storage_used: u64,
     ) -> ShadowDriveResult<String> {
         let wallet_pubkey = self.wallet.pubkey();
         let owner_ata = get_associated_token_address(&wallet_pubkey, &TOKEN_MINT);
@@ -138,7 +171,9 @@ where
             associated_token_program: spl_associated_token_account::ID,
             rent: rent::ID,
         };
-        let args = shdw_drive_instructions::MakeAccountImmutable2 {};
+        let args = shdw_drive_instructions::MakeAccountImmutable2 {
+            storage_used: storage_used,
+        };
 
         let instruction = Instruction {
             program_id: PROGRAM_ADDRESS,

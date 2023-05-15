@@ -44,6 +44,12 @@ pub struct DeleteFileResponse {
     pub error: Option<String>,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct GetBucketSizeResponse {
+    pub storageUsed: u64,
+    pub error: Option<String>,
+}
+
 /// [`ShadowFile`] is the combination of a file name and a [`Payload`].
 #[derive(Debug, Clone)]
 pub struct ShadowFile {
