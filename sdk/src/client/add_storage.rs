@@ -102,7 +102,7 @@ where
             }
         };
 
-        self.send_shdw_txn("add-storage", txn_encoded).await
+        self.send_shdw_txn("add-storage", txn_encoded, None).await
     }
 
     async fn add_storage_v1(

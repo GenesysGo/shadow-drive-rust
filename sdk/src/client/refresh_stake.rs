@@ -10,7 +10,6 @@ use super::ShadowDriveClient;
 use crate::derived_addresses;
 use crate::{
     constants::{PROGRAM_ADDRESS, STORAGE_CONFIG_PDA, TOKEN_MINT},
-    derived_addresses::*,
     models::{
         storage_acct::{StorageAccount, StorageAccountV2, StorageAcct},
         *,

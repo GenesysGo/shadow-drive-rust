@@ -1,5 +1,5 @@
 use serde::de::DeserializeOwned;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use serde_json::{json, Value};
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -139,12 +139,12 @@ where
         &self,
         storage_account: &str,
     ) -> ShadowDriveResult<GetBucketSizeResponse> {
+        let mut bucket_query = HashMap::new();
+        bucket_query.insert("storageAccount", storage_account.to_string());
         let response = self
             .http_client
-            .get(format!(
-                "{}/bucket-size?storageAccount=",
-                SHDW_DRIVE_ENDPOINT
-            ))
+            .get(format!("{}/bucket-size", SHDW_DRIVE_ENDPOINT))
+            .query(&bucket_query)
             .header("Content-Type", "application/json")
             .send()
             .await?;
@@ -165,10 +165,12 @@ where
         &self,
         uri: &str,
         txn_encoded: String,
+        storage_used: Option<u64>,
     ) -> ShadowDriveResult<K> {
         let body = serde_json::to_string(&json!({
            "transaction": txn_encoded,
-           "commitment": "finalized"
+           "commitment": "finalized",
+           "storageUsed": Some(storage_used)
         }))
         .map_err(Error::InvalidJson)?;
 

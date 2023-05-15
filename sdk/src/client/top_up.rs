@@ -58,7 +58,7 @@ where
 
         let mut txn = Transaction::new_with_payer(&[instruction], Some(&wallet_pubkey));
         let recent_blockhash = self.rpc_client.get_latest_blockhash().await?;
-        txn.try_sign(&[&self.wallet], recent_blockhash);
+        txn.try_sign(&[&self.wallet], recent_blockhash)?;
         let txn_result = self.rpc_client.send_and_confirm_transaction(&txn).await?;
 
         Ok(ShdwDriveResponse {

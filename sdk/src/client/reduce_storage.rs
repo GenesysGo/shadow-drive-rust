@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use byte_unit::Byte;
-use serde_json::{json, Value};
+use serde_json::Value;
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
 use shadow_drive_user_staking::instruction as shdw_drive_instructions;
 use solana_sdk::sysvar::rent;
@@ -70,12 +70,12 @@ where
             .map_err(|_| Error::InvalidStorage)?;
 
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
-        let mut bucketQuery = HashMap::new();
-        bucketQuery.insert("storageAccount", storage_account_key.to_string());
+        let mut bucket_query = HashMap::new();
+        bucket_query.insert("storageAccount", storage_account_key.to_string());
         let response = self
             .http_client
             .get(format!("{}/bucket-size", SHDW_DRIVE_ENDPOINT))
-            .query(&bucketQuery)
+            .query(&bucket_query)
             .header("Content-Type", "application/json")
             .send()
             .await?;
@@ -110,7 +110,8 @@ where
             }
         };
 
-        self.send_shdw_txn("reduce-storage", txn_encoded).await
+        self.send_shdw_txn("reduce-storage", txn_encoded, Some(response.storage_used))
+            .await
     }
 
     async fn reduce_storage_v1(
