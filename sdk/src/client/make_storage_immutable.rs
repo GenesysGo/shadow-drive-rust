@@ -66,7 +66,7 @@ where
 
         let response = self
             .http_client
-            .get(format!("{}/bucket-size", SHDW_DRIVE_ENDPOINT))
+            .get(format!("{}/storage-account-size", SHDW_DRIVE_ENDPOINT))
             .query(&bucket_query)
             .header("Content-Type", "application/json")
             .send()

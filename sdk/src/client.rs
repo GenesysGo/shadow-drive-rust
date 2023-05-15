@@ -135,15 +135,15 @@ where
 
         Ok(response)
     }
-    pub async fn get_bucket_size(
+    pub async fn get_storage_account_size(
         &self,
-        storage_account: &str,
+        storage_account_key: &str,
     ) -> ShadowDriveResult<GetBucketSizeResponse> {
         let mut bucket_query = HashMap::new();
-        bucket_query.insert("storageAccount", storage_account.to_string());
+        bucket_query.insert("storageAccount", storage_account_key.to_string());
         let response = self
             .http_client
-            .get(format!("{}/bucket-size", SHDW_DRIVE_ENDPOINT))
+            .get(format!("{}/storage-account-size", SHDW_DRIVE_ENDPOINT))
             .query(&bucket_query)
             .header("Content-Type", "application/json")
             .send()
