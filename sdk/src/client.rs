@@ -21,8 +21,14 @@ mod redeem_rent;
 mod reduce_storage;
 mod refresh_stake;
 mod store_files;
+mod top_up;
 // mod upload_multiple_files;
 
+use crate::{
+    constants::SHDW_DRIVE_ENDPOINT,
+    error::Error,
+    models::{FileDataResponse, GetBucketSizeResponse, ShadowDriveResult},
+};
 pub use add_immutable_storage::*;
 pub use add_storage::*;
 pub use cancel_delete_storage_account::*;
@@ -39,12 +45,7 @@ pub use redeem_rent::*;
 pub use reduce_storage::*;
 pub use refresh_stake::*;
 pub use store_files::*;
-
-use crate::{
-    constants::SHDW_DRIVE_ENDPOINT,
-    error::Error,
-    models::{FileDataResponse, GetBucketSizeResponse, ShadowDriveResult},
-};
+pub use top_up::*;
 
 /// Client that allows a user to interact with the Shadow Drive.
 pub struct ShadowDriveClient<T>

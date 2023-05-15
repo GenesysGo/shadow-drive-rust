@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use serde_json::{json, Value};
 use shadow_drive_user_staking::accounts as shdw_drive_accounts;
@@ -58,12 +60,14 @@ where
         storage_account_key: &Pubkey,
     ) -> ShadowDriveResult<StorageResponse> {
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
+
+        let mut bucketQuery = HashMap::new();
+        bucketQuery.insert("storageAccount", storage_account_key.to_string());
+
         let response = self
             .http_client
-            .get(format!(
-                "{}/bucket-size?storageAccount=",
-                SHDW_DRIVE_ENDPOINT
-            ))
+            .get(format!("{}/bucket-size", SHDW_DRIVE_ENDPOINT))
+            .query(&bucketQuery)
             .header("Content-Type", "application/json")
             .send()
             .await?;
@@ -81,7 +85,7 @@ where
                 self.make_storage_immutable_v1(
                     storage_account_key,
                     storage_account,
-                    response.storageUsed,
+                    response.storage_used,
                 )
                 .await?
             }
@@ -89,7 +93,7 @@ where
                 self.make_storage_immutable_v2(
                     storage_account_key,
                     storage_account,
-                    response.storageUsed,
+                    response.storage_used,
                 )
                 .await?
             }

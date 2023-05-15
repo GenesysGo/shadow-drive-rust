@@ -46,7 +46,7 @@ pub struct DeleteFileResponse {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct GetBucketSizeResponse {
-    pub storageUsed: u64,
+    pub storage_used: u64,
     pub error: Option<String>,
 }
 

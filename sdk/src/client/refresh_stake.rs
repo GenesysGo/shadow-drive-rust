@@ -22,7 +22,7 @@ impl<T> ShadowDriveClient<T>
 where
     T: Signer,
 {
-    ///  Allows user to top off stake account, and unmarks deletion.
+    ///  Allows user to refresh stake account, and unmarks deletion.
     /// * `storage_account_key` - The public key of the [`StorageAccount`](crate::models::StorageAccount) that you want to top up stake for.
     /// # Example
     ///

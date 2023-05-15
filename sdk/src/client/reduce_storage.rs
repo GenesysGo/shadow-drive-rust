@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anchor_lang::{system_program, InstructionData, ToAccountMetas};
 use byte_unit::Byte;
 use serde_json::{json, Value};
@@ -68,13 +70,12 @@ where
             .map_err(|_| Error::InvalidStorage)?;
 
         let selected_storage_acct = self.get_storage_account(storage_account_key).await?;
-
+        let mut bucketQuery = HashMap::new();
+        bucketQuery.insert("storageAccount", storage_account_key.to_string());
         let response = self
             .http_client
-            .get(format!(
-                "{}/bucket-size?storageAccount=",
-                SHDW_DRIVE_ENDPOINT
-            ))
+            .get(format!("{}/bucket-size", SHDW_DRIVE_ENDPOINT))
+            .query(&bucketQuery)
             .header("Content-Type", "application/json")
             .send()
             .await?;
@@ -94,7 +95,7 @@ where
                     storage_account_key,
                     storage_account,
                     size_as_bytes,
-                    response.storageUsed,
+                    response.storage_used,
                 )
                 .await?
             }
@@ -103,7 +104,7 @@ where
                     storage_account_key,
                     storage_account,
                     size_as_bytes,
-                    response.storageUsed,
+                    response.storage_used,
                 )
                 .await?
             }
