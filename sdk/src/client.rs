@@ -1,5 +1,5 @@
 use serde::de::DeserializeOwned;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use serde_json::{json, Value};
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -19,9 +19,16 @@ mod make_storage_immutable;
 mod migrate;
 mod redeem_rent;
 mod reduce_storage;
+mod refresh_stake;
 mod store_files;
+mod top_up;
 // mod upload_multiple_files;
 
+use crate::{
+    constants::SHDW_DRIVE_ENDPOINT,
+    error::Error,
+    models::{FileDataResponse, GetBucketSizeResponse, ShadowDriveResult},
+};
 pub use add_immutable_storage::*;
 pub use add_storage::*;
 pub use cancel_delete_storage_account::*;
@@ -36,13 +43,9 @@ pub use make_storage_immutable::*;
 pub use migrate::*;
 pub use redeem_rent::*;
 pub use reduce_storage::*;
+pub use refresh_stake::*;
 pub use store_files::*;
-
-use crate::{
-    constants::SHDW_DRIVE_ENDPOINT,
-    error::Error,
-    models::{FileDataResponse, ShadowDriveResult},
-};
+pub use top_up::*;
 
 /// Client that allows a user to interact with the Shadow Drive.
 pub struct ShadowDriveClient<T>
@@ -132,15 +135,42 @@ where
 
         Ok(response)
     }
+    pub async fn get_storage_account_size(
+        &self,
+        storage_account_key: &str,
+    ) -> ShadowDriveResult<GetBucketSizeResponse> {
+        let mut bucket_query = HashMap::new();
+        bucket_query.insert("storageAccount", storage_account_key.to_string());
+        let response = self
+            .http_client
+            .get(format!("{}/storage-account-size", SHDW_DRIVE_ENDPOINT))
+            .query(&bucket_query)
+            .header("Content-Type", "application/json")
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(Error::ShadowDriveServerError {
+                status: response.status().as_u16(),
+                message: response.json::<Value>().await?,
+            });
+        }
+
+        let response = response.json::<GetBucketSizeResponse>().await?;
+
+        Ok(response)
+    }
 
     async fn send_shdw_txn<K: DeserializeOwned>(
         &self,
         uri: &str,
         txn_encoded: String,
+        storage_used: Option<u64>,
     ) -> ShadowDriveResult<K> {
         let body = serde_json::to_string(&json!({
            "transaction": txn_encoded,
-           "commitment": "finalized"
+           "commitment": "finalized",
+           "storageUsed": Some(storage_used)
         }))
         .map_err(Error::InvalidJson)?;
 
