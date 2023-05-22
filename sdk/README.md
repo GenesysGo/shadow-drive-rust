@@ -9,7 +9,7 @@ Available on [crates.io](https://crates.io/crates/shadow-drive-rust).
 Add the crate to your `Cargo.toml`.
 
 ```toml
-shadow-drive-rust = "0.6.3"
+shadow-drive-rust = "0.7.0"
 ```
 
 ### Examples
