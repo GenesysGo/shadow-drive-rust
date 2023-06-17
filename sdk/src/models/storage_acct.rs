@@ -117,4 +117,11 @@ impl StorageAcct {
             StorageAcct::V2(acct) => acct.reserved_bytes,
         }
     }
+
+    pub fn to_be_deleted(&self) -> bool {
+        match self {
+            StorageAcct::V1(acct) => acct.to_be_deleted,
+            StorageAcct::V2(acct) => acct.to_be_deleted,
+        }
+    }
 }
