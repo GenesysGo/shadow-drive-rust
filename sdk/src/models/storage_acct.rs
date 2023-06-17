@@ -124,4 +124,11 @@ impl StorageAcct {
             StorageAcct::V2(acct) => acct.to_be_deleted,
         }
     }
+
+    pub fn is_owner(&self, account: Pubkey) -> bool {
+        match self {
+            StorageAcct::V1(acct) => (acct.owner_1 == account) | (acct.owner_2 == account),
+            StorageAcct::V2(acct) => acct.owner_1 == account,
+        }
+    }
 }
