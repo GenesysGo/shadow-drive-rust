@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-shadow-drive-rust = {path = ".."}
+shadow-drive-sdk = {path = ".."}
 
 cryptohelpers = {version = "^2.0.0", features= ["sha256"], default-features=false}
 hex = "0.4.3"
-solana-client = "~1.10.29"
-solana-sdk = "~1.10.29"
+solana-client = "~1.14.16"
+solana-sdk = "~1.14.16"
 byte-unit = "^4"
 tokio = {version = "^1", features = ["full"]}
 tokio-stream = {version = "^0.1", features = ["fs"]}
