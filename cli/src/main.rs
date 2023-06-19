@@ -1,11 +1,8 @@
-mod cli;
-
 use anyhow::anyhow;
 use clap::{IntoApp, Parser};
-use cli::Opts;
-use shadow_drive_cli::WrappedSigner;
+use shadow_drive_cli::Opts;
 use shadow_rpc_auth::{authenticate, parse_account_id_from_url};
-use solana_clap_v3_utils::keypair::signer_from_path;
+use solana_clap_v3_utils::keypair::keypair_from_path;
 
 pub const GENESYSGO_AUTH_KEYWORD: &str = "genesysgo";
 
@@ -27,18 +24,27 @@ async fn main() -> anyhow::Result<()> {
         let config_file = solana_cli_config::CONFIG_FILE
             .as_ref()
             .ok_or_else(|| anyhow!("unable to determine a config file path on this OS or user"))?;
-        solana_cli_config::Config::load(&config_file)
-            .map_err(|_| anyhow!(NO_CONFIG_FILE))
+        solana_cli_config::Config::load(&config_file).map_err(|_| anyhow!(NO_CONFIG_FILE))
     }?;
     let keypath = opts
         .cfg_override
         .keypair
-        .unwrap_or(config.keypair_path.clone());
-    // Resolve it into a dyn Signer, and wrap it so that it can be passed as a `T: Signer`.
-    let mut wallet_manager = None;
-    let signer = signer_from_path(&matches, &keypath, "keypair", &mut wallet_manager)
-        .map_err(|e| anyhow!("Could not resolve signer: {:?}", e))?;
-    let signer = WrappedSigner::new(signer);
+        .unwrap_or_else(|| config.keypair_path.clone());
+    let signer = keypair_from_path(
+        &matches,
+        shellexpand::tilde(&keypath).as_ref(),
+        "keypair",
+        false,
+    )
+    .unwrap();
+    // TODO: refactor to a single keypair after https://github.com/solana-labs/solana/pull/32181
+    let signer_2 = keypair_from_path(
+        &matches,
+        shellexpand::tilde(&keypath).as_ref(),
+        "keypair",
+        false,
+    )
+    .unwrap();
 
     // Resolve the RPC URL from either a command-line arg or the Solana CLI config file.
     let url = opts.cfg_override.url.unwrap_or(config.json_rpc_url);
@@ -52,7 +58,13 @@ async fn main() -> anyhow::Result<()> {
     };
 
     opts.command
-        .process(signer, &url, opts.cfg_override.skip_confirm, auth)
+        .process(
+            &signer,
+            signer_2,
+            &url,
+            opts.cfg_override.skip_confirm,
+            auth,
+        )
         .await?;
     Ok(())
 }
