@@ -33,6 +33,9 @@ pub(crate) async fn process(
         panic!()
     };
 
+    // Ask user what they would like to name their group
+    let name = Text::new("What would you like to n ame your group").prompt()?;
+
     // Ask for other members if not single_member
     let other_members = Rc::new(RefCell::new(vec![]));
     let other_members_scope = Rc::clone(&other_members);
@@ -119,6 +122,7 @@ pub(crate) async fn process(
 
     // Construct the instruction to create a creator group
     let args = CreateGroupArgs {
+        name,
         // TODO: change when multisig is true by default
         multisig: true,
     };

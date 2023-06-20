@@ -600,6 +600,8 @@ pub(super) async fn process(
         start_time,
         end_time,
         if_init_collection,
+        // In this cli, we always deal with an initialized group
+        if_init_group_name: "".to_string(),
         mint_type,
     };
     let create_minter_ix_data = InitializeMinterInstruction { args };
