@@ -17,12 +17,14 @@ pub(super) async fn process(signer: &impl Signer, rpc_url: &str) -> anyhow::Resu
     let name = "Shadowy".into();
     let symbol = "ssm".into();
     let royalty_50bps = vec![];
+    let for_minter = true;
 
     // Construct the instruction to create a minter
     let args = CreateCollectionArgs {
         name,
         symbol,
         royalty_50bps,
+        for_minter,
     };
     let create_group_ix_data = CreateCollectionInstruction { args };
     let create_group_accounts = CreateCollectionAccounts {

@@ -128,6 +128,7 @@ pub(super) async fn process(
                             .map(Result::unwrap)
                     })
                     .collect::<Result<_, _>>()?,
+                for_minter: true,
             };
             let collection = Collection::get_pda(creator_group, &args.name);
             collection_name = args.name.clone();
@@ -590,7 +591,6 @@ pub(super) async fn process(
         reveal_hash,
         name_prefix: "ssm".into(),
         prefix_uri: Prefix::Arweave,
-        extension: "jpeg".into(),
     };
 
     // Construct the instruction to create a minter

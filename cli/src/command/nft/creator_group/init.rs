@@ -121,11 +121,7 @@ pub(crate) async fn process(
     }
 
     // Construct the instruction to create a creator group
-    let args = CreateGroupArgs {
-        name,
-        // TODO: change when multisig is true by default
-        multisig: true,
-    };
+    let args = CreateGroupArgs { name };
     let create_group_ix_data = CreateGroupInstruction { args };
     let create_group_accounts = CreateGroupAccounts {
         creator_group,
