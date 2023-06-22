@@ -13,7 +13,6 @@ use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Signature, Signer, SignerError};
 use std::io::stdin;
-use std::ops::Deref;
 use std::path::PathBuf;
 use std::str::FromStr;
 

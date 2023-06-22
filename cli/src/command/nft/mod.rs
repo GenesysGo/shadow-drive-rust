@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use clap::Parser;
 use shadow_drive_sdk::Signer;
 
@@ -31,8 +29,6 @@ impl NftCommand {
         signer: &T,
         client_signer: T,
         rpc_url: &str,
-        skip_confirm: bool,
-        auth: Option<String>,
     ) -> anyhow::Result<()> {
         match self {
             NftCommand::Minter(minter_cmd) => {

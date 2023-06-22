@@ -5,13 +5,11 @@ use crate::utils::{
 };
 use byte_unit::Byte;
 use clap::Parser;
-use itertools::Itertools;
+use futures::StreamExt;
 use shadow_drive_sdk::{Pubkey, ShadowDriveClient, StorageAccountVersion};
 use shadow_rpc_auth::genesysgo_auth::{authenticate, parse_account_id_from_url};
 use solana_sdk::signature::Signer;
 use std::path::PathBuf;
-use std::thread::sleep;
-use std::time::Duration;
 
 #[derive(Debug, Parser)]
 pub enum DriveCommand {
@@ -353,19 +351,27 @@ impl DriveCommand {
                 The files in their current state become public as soon as they're uploaded."
                 );
                 wait_for_user_confirmation(skip_confirm)?;
-                for chunk in &files.into_iter().chunks(*batch_size) {
-                    let response = client
-                        .store_files(
-                            &storage_account,
-                            chunk
-                                .map(|path: &PathBuf| shadow_file_with_basename(path))
-                                .collect(),
-                        )
-                        .await;
-                    let resp = process_shadow_api_response(response)?;
-                    println!("{:#?}", resp);
-                    sleep(Duration::from_millis(150));
+                let mut responses = Vec::new();
+                for chunk in files.chunks(*batch_size) {
+                    let response = async {
+                        let resp = client
+                            .store_files(
+                                &storage_account,
+                                chunk
+                                    .into_iter()
+                                    .map(|path: &PathBuf| shadow_file_with_basename(path))
+                                    .collect(),
+                            )
+                            .await;
+                        let resp = process_shadow_api_response(resp).unwrap();
+                        println!("{:#?}", resp);
+                    };
+                    responses.push(response);
                 }
+                futures::stream::iter(responses)
+                    .buffer_unordered(100)
+                    .collect::<Vec<_>>()
+                    .await;
             }
         }
         Ok(())
