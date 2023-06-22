@@ -1,7 +1,7 @@
 {
     "creator_group": "Cxd2qRPavG8MR463QAxZ7g5o8zr36XmbhyfUwkYnGL9D",
     "collection": "7w3VdpQTBztjfpa9kFdsFkfAJNpRirmk8ZAE29HGB4bu",
-    "just_a_comment": "reveal_hash is the hash of the file that maps mint index -> asset index",
+    "just_a_comment": "reveal_hash is the hash of the file that maps mint index -> asset index (if doing a post-mint reveal)",
     "reveal_hash_all_ones_if_none": "11111111111111111111111111111111",
     "items_available": 10000,
     "mint_price_lamports": 0,
