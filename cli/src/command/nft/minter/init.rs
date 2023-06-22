@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use futures::StreamExt;
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 use inquire::validator::Validation;
 use inquire::{Confirm, Text};
 use itertools::Itertools;
@@ -413,6 +413,14 @@ fn validate_metadata_dir(
             return Err(anyhow::Error::msg("failed to read directory entries"))
     };
 
+    let pb = ProgressBar::new(items_available as u64)
+        .with_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] {prefix} {bar:30.cyan/blue} {pos:>7}/{len:7}",
+            )
+            .unwrap(),
+        )
+        .with_prefix("Validating JSON");
     for i in 0..items_available as usize {
         // Expected filename
         let expected_filename = Path::new(&format!("{i}")).with_extension("json");
@@ -432,17 +440,19 @@ fn validate_metadata_dir(
             )));
         }
 
-        // Check for companion files
+        // Check for companion files (minor TODO: This makes loop O(N^2)...)
         counts[i] += all_files_in_dir
             .iter()
             .filter(|f| f.file_stem() == Some(OsStr::new(&format!("{i}"))))
             .count();
+
+        pb.inc(1);
     }
 
     // Ensure every json file has a companion media file
     for (i, count) in counts.into_iter().enumerate() {
         if count == 1 {
-            println!("Warning: File {i}.json does not have a companion media file, e.g. {i}.png")
+            println!("Warning: {i}.json does not have expected companion file, e.g. {i}.png. Ignore if using some other convention.")
         }
     }
 
