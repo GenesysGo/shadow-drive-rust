@@ -4,38 +4,30 @@ use serde_json::Value;
 use solana_sdk::{pubkey::Pubkey, transaction::VersionedTransaction};
 use std::str::FromStr;
 
-/// This function ensures the contents of a JSON file are compliant with the Metaplex Standard
+/// This function ensures the contents of a JSON file are compliant with the Off-Chain Shadow Standard
 /// which we define as a JSON with the non-null values for the following fields:
 ///
 /// 1) `name`:  Name of the asset.
 /// 2) `symbol`: Symbol of the asset.
 /// 3) `description`: Description of the asset.
 /// 4) `image`: URI pointing to the asset's logo.
-/// 5) `animation_url`: URI pointing to the asset's animation.
-/// 6) `external_url`: URI pointing to an external URL defining the asset — e.g. the game's main site.
-/// 7) `attributes`: Array of attributes defining the characteristics of the asset.
+/// 5) `external_url`: URI pointing to an external URL defining the asset — e.g. the game's main site.
+///
+/// The function simply checks whether these fields are non-null. Although we do not check for it,
+/// we recommend the following fields are included if relevant:
+///
+/// 6) `animation_url` (optional): URI pointing to the asset's animation.
+/// 7) `attributes` (optional): Array of attributes defining the characteristics of the asset.
 ///    a) `trait_type`: The type of attribute.
 ///    b) `value`: The value for that attribute.
-///
-/// This is taken from https://docs.metaplex.com/programs/token-metadata/token-standard and reformatted.
-///
-/// The function simply checks whether the fields are non-null
-pub(crate) fn validate_json_compliance(json: &Value) -> bool {
+pub fn validate_json_compliance(json: &Value) -> bool {
     let has_name = json.get("name").is_some();
     let has_symbol = json.get("symbol").is_some();
     let has_description = json.get("description").is_some();
     let has_image = json.get("image").is_some();
-    let has_animation_url = json.get("animation_url").is_some();
     let has_external_url = json.get("external_url").is_some();
-    let has_attributes = json.get("attributes").is_some();
 
-    has_name
-        & has_symbol
-        & has_description
-        & has_image
-        & has_animation_url
-        & has_external_url
-        & has_attributes
+    has_name & has_symbol & has_description & has_image & has_external_url
 }
 
 pub(crate) async fn swap_sol_for_shdw_tx(
