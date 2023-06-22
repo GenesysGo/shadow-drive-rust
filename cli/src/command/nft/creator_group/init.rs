@@ -112,8 +112,6 @@ pub(crate) async fn process(
         )
     };
 
-    // TODO: add name here when we change contract
-
     // Confirm input with user
     match Confirm::new(&format!(
         "Send and confirm transaction (signing with {})?",
