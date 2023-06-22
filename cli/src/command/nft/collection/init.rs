@@ -52,7 +52,7 @@ pub(super) async fn process(signer: &impl Signer, rpc_url: &str) -> anyhow::Resu
     let collection = Collection::get_pda(creator_group, &name);
 
     // Construct the instruction to create a minter
-    let for_minter = Confirm::new("Is this collection for a shadowy super minter? (no for 1/1s). You cannot change this later").prompt()?;
+    let for_minter = Confirm::new("Is this collection for a shadowy super minter? (no for 1/1s)? You cannot change this later.").prompt()?;
     let args = CreateCollectionArgs {
         name,
         symbol,
