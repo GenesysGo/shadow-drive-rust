@@ -28,8 +28,7 @@ use solana_sdk::system_program;
 use solana_sdk::transaction::Transaction;
 
 use crate::command::nft::utils::{
-     swap_sol_for_shdw_tx, 
-    validate_json_compliance, SHDW_MINT_PUBKEY,
+    swap_sol_for_shdw_tx, validate_json_compliance, SHDW_MINT_PUBKEY,
 };
 use crate::utils::shadow_client_factory;
 
@@ -110,7 +109,7 @@ pub(super) async fn process(
     };
     let Ok(
         MinterInitArgs { creator_group, collection, reveal_hash_all_ones_if_none, items_available, mint_price_lamports, start_time_solana_cluster_time, end_time_solana_cluster_time, sdrive_account, name_prefix, metadata_dir }
-    ) 
+    )
     = serde_json::from_str(&config_file_contents) else {
         return Err(anyhow::Error::msg("Failed to deserialize json. Do you have all fields filled in and is it formatted properly?"))
     };
@@ -170,8 +169,8 @@ pub(super) async fn process(
                     .list_objects(&account)
                     .await
                     .map_err(|_| anyhow::Error::msg("Failed to get files in storage account"))?;
-                let all_files_exist = (0..items_available)
-                    .all(|i| existing_files.contains(&format!("{i}.json")));
+                let all_files_exist =
+                    (0..items_available).all(|i| existing_files.contains(&format!("{i}.json")));
 
                 if !all_files_exist {
                     // Check if there is enough storage
