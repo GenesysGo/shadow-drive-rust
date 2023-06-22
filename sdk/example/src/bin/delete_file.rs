@@ -1,4 +1,4 @@
-use shadow_drive_rust::{models::ShadowFile, ShadowDriveClient};
+use shadow_drive_sdk::{models::ShadowFile, ShadowDriveClient};
 use solana_sdk::{pubkey::Pubkey, signer::keypair::read_keypair_file};
 use std::str::FromStr;
 

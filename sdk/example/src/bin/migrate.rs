@@ -1,5 +1,5 @@
 use byte_unit::Byte;
-use shadow_drive_rust::{ShadowDriveClient, StorageAccountVersion};
+use shadow_drive_sdk::{ShadowDriveClient, StorageAccountVersion};
 use solana_sdk::{pubkey::Pubkey, signer::keypair::read_keypair_file};
 use std::str::FromStr;
 

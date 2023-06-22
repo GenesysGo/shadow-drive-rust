@@ -1,0 +1,14 @@
+{
+    "creator_group": "Cxd2qRPavG8MR463QAxZ7g5o8zr36XmbhyfUwkYnGL9D",
+    "collection": "7w3VdpQTBztjfpa9kFdsFkfAJNpRirmk8ZAE29HGB4bu",
+    "just_a_comment": "reveal_hash is the hash of the file that maps mint index -> asset index (if doing a post-mint reveal)",
+    "reveal_hash_all_ones_if_none": "11111111111111111111111111111111",
+    "items_available": 10000,
+    "mint_price_lamports": 0,
+    "start_time_solana_cluster_time": -9223372036854775808,
+    "end_time_solana_cluster_time": 9223372036854775807,
+    "sdrive_account": "EzG8gTdHXTcdArJJPgxbMsWoWnswuPzCnMd3mCAPPash",
+    "just_another_comment": "name_prefix is common part of asset name, e.g. Shadowy Super Coders in Shadowy Super Coder #12000",
+    "name_prefix": "First",
+    "metadata_dir": "metas/"
+}

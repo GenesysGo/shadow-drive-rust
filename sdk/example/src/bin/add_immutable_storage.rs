@@ -1,5 +1,5 @@
 use byte_unit::Byte;
-use shadow_drive_rust::{
+use shadow_drive_sdk::{
     models::storage_acct::StorageAcct, ShadowDriveClient, StorageAccountVersion,
 };
 use solana_sdk::{

@@ -1,5 +1,5 @@
 use byte_unit::Byte;
-use shadow_drive_rust::{models::ShadowFile, ShadowDriveClient, StorageAccountVersion};
+use shadow_drive_sdk::{models::ShadowFile, ShadowDriveClient, StorageAccountVersion};
 use solana_sdk::{
     pubkey,
     pubkey::Pubkey,
