@@ -1,8 +1,6 @@
 use super::Command;
 use solana_sdk::signature::Signer;
 
-use core::ops::Deref;
-
 impl Command {
     pub async fn process<T: Signer>(
         &self,
@@ -21,9 +19,7 @@ impl Command {
             }
 
             Command::NftCommand(nft_command) => {
-                nft_command
-                    .process(signer, client_signer, rpc_url, skip_confirm, auth)
-                    .await
+                nft_command.process(signer, client_signer, rpc_url).await
             }
         }
     }
