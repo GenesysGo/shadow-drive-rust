@@ -34,7 +34,7 @@ pub(crate) async fn process(
     };
 
     // Ask user what they would like to name their group
-    let name = Text::new("What would you like to n ame your group").prompt()?;
+    let name = Text::new("What would you like to name your group").prompt()?;
 
     // Ask for other members if not single_member
     let other_members = Rc::new(RefCell::new(vec![]));
