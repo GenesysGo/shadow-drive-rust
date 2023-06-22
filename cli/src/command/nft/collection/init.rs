@@ -84,6 +84,16 @@ pub(super) async fn process(signer: &impl Signer, rpc_url: &str) -> anyhow::Resu
         client.get_latest_blockhash().await?,
     );
 
+    match Confirm::new(&format!(
+        "Send and confirm transaction (signing with {})?",
+        signer.pubkey()
+    ))
+    .prompt()
+    {
+        Ok(true) => {}
+        _ => return Err(anyhow::Error::msg("Discarded Request")),
+    }
+
     if let Err(e) = client.send_and_confirm_transaction(&create_group_tx).await {
         return Err(anyhow::Error::msg(e));
     };

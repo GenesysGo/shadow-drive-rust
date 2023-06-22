@@ -376,7 +376,12 @@ pub(super) async fn process(
         client.get_latest_blockhash().await?,
     );
 
-    match Confirm::new(&format!("Confirm Input (signing with {})", signer.pubkey())).prompt() {
+    match Confirm::new(&format!(
+        "Send and confirm transaction (signing with {})?",
+        signer.pubkey()
+    ))
+    .prompt()
+    {
         Ok(true) => {}
         _ => return Err(anyhow::Error::msg("Discarded Request")),
     }

@@ -115,7 +115,12 @@ pub(crate) async fn process(
     // TODO: add name here when we change contract
 
     // Confirm input with user
-    match Confirm::new(&format!("Confirm Input (signing with {})", signer.pubkey())).prompt() {
+    match Confirm::new(&format!(
+        "Send and confirm transaction (signing with {})?",
+        signer.pubkey()
+    ))
+    .prompt()
+    {
         Ok(true) => {}
         _ => return Err(anyhow::Error::msg("Discarded Request")),
     }
