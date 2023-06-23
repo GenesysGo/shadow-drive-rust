@@ -98,7 +98,7 @@ pub(super) async fn process(
         Ok(sig) => {
             println!("Successful: https://explorer.solana.com/tx/{sig}")
         }
-        Err(e) => return Err(anyhow::Error::msg(e)),
+        Err(e) => return Err(anyhow::Error::msg(format!("{e:#?}"))),
     };
 
     println!("minted");
