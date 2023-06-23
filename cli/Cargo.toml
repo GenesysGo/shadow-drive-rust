@@ -12,6 +12,7 @@ repository = { workspace = true }
 [dependencies]
 shadow-drive-sdk = { path = "../sdk", version = "0.7.1" }
 shadow-rpc-auth = { path = "../auth", version = "0.7.1" }
+shadow-nft-common = { git = "https://github.com/genesysgo/shadow-nft-standard", branch = "main"}
 shadow-nft-standard = { git = "https://github.com/genesysgo/shadow-nft-standard", branch = "main"}
 shadowy-super-minter = { git = "https://github.com/genesysgo/shadow-nft-standard", branch = "main"}
 tokio = { version = "^1", features = ["full"] }
