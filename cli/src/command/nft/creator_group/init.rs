@@ -150,8 +150,11 @@ pub(crate) async fn process(
     );
 
     println!("Sending create group tx. May take a while to confirm.");
-    if let Err(e) = client.send_and_confirm_transaction(&create_group_tx).await {
-        return Err(anyhow::Error::msg(e));
+    match client.send_and_confirm_transaction(&create_group_tx).await {
+        Ok(sig) => {
+            println!("Successful: https://explorer.solana.com/tx/{sig}")
+        }
+        Err(e) => return Err(anyhow::Error::msg(e)),
     };
     println!("Initialized {creator_group}");
 

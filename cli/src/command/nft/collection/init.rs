@@ -94,8 +94,11 @@ pub(super) async fn process(signer: &impl Signer, rpc_url: &str) -> anyhow::Resu
         _ => return Err(anyhow::Error::msg("Discarded Request")),
     }
 
-    if let Err(e) = client.send_and_confirm_transaction(&create_group_tx).await {
-        return Err(anyhow::Error::msg(e));
+    match client.send_and_confirm_transaction(&create_group_tx).await {
+        Ok(sig) => {
+            println!("Successful: https://explorer.solana.com/tx/{sig}")
+        }
+        Err(e) => return Err(anyhow::Error::msg(e)),
     };
     println!("");
 

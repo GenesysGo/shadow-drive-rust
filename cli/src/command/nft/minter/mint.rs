@@ -80,9 +80,14 @@ pub(super) async fn process(
     }
 
     // Sign and send
-    if let Err(e) = client.send_and_confirm_transaction(&mint_tx) {
-        return Err(anyhow::Error::msg(e));
+    match client.send_and_confirm_transaction(&mint_tx) {
+        Ok(sig) => {
+            println!("Successful: https://explorer.solana.com/tx/{sig}")
+        }
+        Err(e) => return Err(anyhow::Error::msg(e)),
     };
+
+    println!("minted");
 
     Ok(())
 }
