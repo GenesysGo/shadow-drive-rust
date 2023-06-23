@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use clap::{IntoApp, Parser};
-use shadow_drive_cli::Opts;
 use shadow_rpc_auth::{authenticate, parse_account_id_from_url};
+use shdw::Opts;
 use solana_clap_v3_utils::keypair::keypair_from_path;
 
 pub const GENESYSGO_AUTH_KEYWORD: &str = "genesysgo";
