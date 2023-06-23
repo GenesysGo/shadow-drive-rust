@@ -7,8 +7,13 @@ mod withdraw;
 
 #[derive(Debug, Parser)]
 pub enum CollectionCommand {
+    /// Initialize a collection
     Init,
+
+    /// Retrieve and print an onchain Collection account
     Get { collection: Pubkey },
+
+    /// Withdraw mint fees from an onchain Collection account
     Withdraw { collection: Pubkey },
 }
 impl CollectionCommand {

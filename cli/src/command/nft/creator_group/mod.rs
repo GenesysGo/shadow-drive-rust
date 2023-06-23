@@ -6,7 +6,10 @@ pub(crate) mod init;
 
 #[derive(Debug, Parser)]
 pub enum CreatorGroupCommand {
+    /// Initialize a creator group
     Init,
+
+    /// Retrieve and print an onchain CreatorGroup account
     Get { creator_group: Pubkey },
 }
 
