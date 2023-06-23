@@ -34,7 +34,7 @@ pub(crate) async fn process(
     };
 
     // Ask user what they would like to name their group
-    let name = Text::new("What would you like to n ame your group").prompt()?;
+    let name = Text::new("What would you like to name your group").prompt()?;
 
     // Ask for other members if not single_member
     let other_members = Rc::new(RefCell::new(vec![]));
@@ -112,10 +112,13 @@ pub(crate) async fn process(
         )
     };
 
-    // TODO: add name here when we change contract
-
     // Confirm input with user
-    match Confirm::new(&format!("Confirm Input (signing with {})", signer.pubkey())).prompt() {
+    match Confirm::new(&format!(
+        "Send and confirm transaction (signing with {})?",
+        signer.pubkey()
+    ))
+    .prompt()
+    {
         Ok(true) => {}
         _ => return Err(anyhow::Error::msg("Discarded Request")),
     }
@@ -147,8 +150,11 @@ pub(crate) async fn process(
     );
 
     println!("Sending create group tx. May take a while to confirm.");
-    if let Err(e) = client.send_and_confirm_transaction(&create_group_tx).await {
-        return Err(anyhow::Error::msg(e));
+    match client.send_and_confirm_transaction(&create_group_tx).await {
+        Ok(sig) => {
+            println!("Successful: https://explorer.solana.com/tx/{sig}")
+        }
+        Err(e) => return Err(anyhow::Error::msg(format!("{e:#?}"))),
     };
     println!("Initialized {creator_group}");
 

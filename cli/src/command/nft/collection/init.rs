@@ -52,7 +52,7 @@ pub(super) async fn process(signer: &impl Signer, rpc_url: &str) -> anyhow::Resu
     let collection = Collection::get_pda(creator_group, &name);
 
     // Construct the instruction to create a minter
-    let for_minter = Confirm::new("Is this collection for a shadowy super minter? (no for 1/1s). You cannot change this later").prompt()?;
+    let for_minter = Confirm::new("Is this collection for a shadowy super minter? (no for 1/1s)? You cannot change this later.").prompt()?;
     let args = CreateCollectionArgs {
         name,
         symbol,
@@ -84,8 +84,21 @@ pub(super) async fn process(signer: &impl Signer, rpc_url: &str) -> anyhow::Resu
         client.get_latest_blockhash().await?,
     );
 
-    if let Err(e) = client.send_and_confirm_transaction(&create_group_tx).await {
-        return Err(anyhow::Error::msg(e));
+    match Confirm::new(&format!(
+        "Send and confirm transaction (signing with {})?",
+        signer.pubkey()
+    ))
+    .prompt()
+    {
+        Ok(true) => {}
+        _ => return Err(anyhow::Error::msg("Discarded Request")),
+    }
+
+    match client.send_and_confirm_transaction(&create_group_tx).await {
+        Ok(sig) => {
+            println!("Successful: https://explorer.solana.com/tx/{sig}")
+        }
+        Err(e) => return Err(anyhow::Error::msg(format!("{e:#?}"))),
     };
     println!("");
 

@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use futures::StreamExt;
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 use inquire::validator::Validation;
 use inquire::{Confirm, Text};
 use itertools::Itertools;
@@ -28,8 +28,7 @@ use solana_sdk::system_program;
 use solana_sdk::transaction::Transaction;
 
 use crate::command::nft::utils::{
-     swap_sol_for_shdw_tx, 
-    validate_json_compliance, SHDW_MINT_PUBKEY,
+    swap_sol_for_shdw_tx, validate_json_compliance, SHDW_MINT_PUBKEY,
 };
 use crate::utils::shadow_client_factory;
 
@@ -103,6 +102,7 @@ pub(super) async fn process(
                 Ok(Validation::Invalid("Path does not exist".into()))
             }
         })
+        .with_autocomplete(FilePathCompleter::default())
         .prompt()?;
 
     let Ok(config_file_contents) = std::fs::read_to_string(config_file_path) else {
@@ -110,7 +110,7 @@ pub(super) async fn process(
     };
     let Ok(
         MinterInitArgs { creator_group, collection, reveal_hash_all_ones_if_none, items_available, mint_price_lamports, start_time_solana_cluster_time, end_time_solana_cluster_time, sdrive_account, name_prefix, metadata_dir }
-    ) 
+    )
     = serde_json::from_str(&config_file_contents) else {
         return Err(anyhow::Error::msg("Failed to deserialize json. Do you have all fields filled in and is it formatted properly?"))
     };
@@ -170,8 +170,8 @@ pub(super) async fn process(
                     .list_objects(&account)
                     .await
                     .map_err(|_| anyhow::Error::msg("Failed to get files in storage account"))?;
-                let all_files_exist = (0..items_available)
-                    .all(|i| existing_files.contains(&format!("{i}.json")));
+                let all_files_exist =
+                    (0..items_available).all(|i| existing_files.contains(&format!("{i}.json")));
 
                 if !all_files_exist {
                     // Check if there is enough storage
@@ -376,14 +376,21 @@ pub(super) async fn process(
         client.get_latest_blockhash().await?,
     );
 
-    match Confirm::new(&format!("Confirm Input (signing with {})", signer.pubkey())).prompt() {
+    match Confirm::new(&format!(
+        "Send and confirm transaction (signing with {})?",
+        signer.pubkey()
+    ))
+    .prompt()
+    {
         Ok(true) => {}
         _ => return Err(anyhow::Error::msg("Discarded Request")),
     }
 
-    if let Err(e) = client.send_and_confirm_transaction(&create_minter_tx).await {
-        println!("{e:#?}");
-        return Err(anyhow::Error::msg(e));
+    match client.send_and_confirm_transaction(&create_minter_tx).await {
+        Ok(sig) => {
+            println!("Successful: https://explorer.solana.com/tx/{sig}")
+        }
+        Err(e) => return Err(anyhow::Error::msg(format!("{e:#?}"))),
     };
 
     println!("Initialized Minter for {collection_name}");
@@ -409,6 +416,14 @@ fn validate_metadata_dir(
             return Err(anyhow::Error::msg("failed to read directory entries"))
     };
 
+    let pb = ProgressBar::new(items_available as u64)
+        .with_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] {prefix} {bar:30.cyan/blue} {pos:>7}/{len:7}",
+            )
+            .unwrap(),
+        )
+        .with_prefix("Validating JSON");
     for i in 0..items_available as usize {
         // Expected filename
         let expected_filename = Path::new(&format!("{i}")).with_extension("json");
@@ -428,17 +443,19 @@ fn validate_metadata_dir(
             )));
         }
 
-        // Check for companion files
+        // Check for companion files (minor TODO: This makes loop O(N^2)...)
         counts[i] += all_files_in_dir
             .iter()
             .filter(|f| f.file_stem() == Some(OsStr::new(&format!("{i}"))))
             .count();
+
+        pb.inc(1);
     }
 
     // Ensure every json file has a companion media file
     for (i, count) in counts.into_iter().enumerate() {
         if count == 1 {
-            println!("Warning: File {i}.json does not have a companion media file, e.g. {i}.png")
+            println!("Warning: {i}.json does not have expected companion file, e.g. {i}.png. Ignore if using some other convention.")
         }
     }
 
@@ -451,3 +468,119 @@ fn safe_amount(additional_storage: u64, rate_per_gib: u64) -> u64 {
     ((additional_storage as u128) * (rate_per_gib as u128) / (BYTES_PER_GIB)) as u64
 }
 const BYTES_PER_GIB: u128 = 1 << 30;
+
+#[derive(Clone, Default)]
+pub struct FilePathCompleter {
+    input: String,
+    paths: Vec<String>,
+    lcp: String,
+}
+
+impl FilePathCompleter {
+    fn update_input(&mut self, input: &str) -> Result<(), inquire::CustomUserError> {
+        if input == self.input {
+            return Ok(());
+        }
+
+        self.input = input.to_owned();
+        self.paths.clear();
+
+        let input_path = std::path::PathBuf::from(input);
+
+        let fallback_parent = input_path
+            .parent()
+            .map(|p| {
+                if p.to_string_lossy() == "" {
+                    std::path::PathBuf::from(".")
+                } else {
+                    p.to_owned()
+                }
+            })
+            .unwrap_or_else(|| std::path::PathBuf::from("."));
+
+        let scan_dir = if input.ends_with('/') {
+            input_path
+        } else {
+            fallback_parent.clone()
+        };
+
+        let entries = match std::fs::read_dir(scan_dir) {
+            Ok(read_dir) => Ok(read_dir),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                std::fs::read_dir(fallback_parent)
+            }
+            Err(err) => Err(err),
+        }?
+        .collect::<Result<Vec<_>, _>>()?;
+
+        let mut idx = 0;
+        let limit = 15;
+
+        while idx < entries.len() && self.paths.len() < limit {
+            let entry = entries.get(idx).unwrap();
+
+            let path = entry.path();
+            let path_str = if path.is_dir() {
+                format!("{}/", path.to_string_lossy())
+            } else {
+                path.to_string_lossy().to_string()
+            };
+
+            if path_str.starts_with(&self.input) && path_str.len() != self.input.len() {
+                self.paths.push(path_str);
+            }
+
+            idx = idx.saturating_add(1);
+        }
+
+        self.lcp = self.longest_common_prefix();
+
+        Ok(())
+    }
+
+    fn longest_common_prefix(&self) -> String {
+        let mut ret: String = String::new();
+
+        let mut sorted = self.paths.clone();
+        sorted.sort();
+        if sorted.is_empty() {
+            return ret;
+        }
+
+        let mut first_word = sorted.first().unwrap().chars();
+        let mut last_word = sorted.last().unwrap().chars();
+
+        loop {
+            match (first_word.next(), last_word.next()) {
+                (Some(c1), Some(c2)) if c1 == c2 => {
+                    ret.push(c1);
+                }
+                _ => return ret,
+            }
+        }
+    }
+}
+
+impl inquire::Autocomplete for FilePathCompleter {
+    fn get_suggestions(&mut self, input: &str) -> Result<Vec<String>, inquire::CustomUserError> {
+        self.update_input(input)?;
+
+        Ok(self.paths.clone())
+    }
+
+    fn get_completion(
+        &mut self,
+        input: &str,
+        highlighted_suggestion: Option<String>,
+    ) -> Result<inquire::autocompletion::Replacement, inquire::CustomUserError> {
+        self.update_input(input)?;
+
+        Ok(match highlighted_suggestion {
+            Some(suggestion) => inquire::autocompletion::Replacement::Some(suggestion),
+            None => match self.lcp.is_empty() {
+                true => inquire::autocompletion::Replacement::None,
+                false => inquire::autocompletion::Replacement::Some(self.lcp.clone()),
+            },
+        })
+    }
+}

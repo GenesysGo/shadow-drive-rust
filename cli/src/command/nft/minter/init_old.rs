@@ -644,9 +644,11 @@ pub(super) async fn process(
         client.get_latest_blockhash().await?,
     );
 
-    if let Err(e) = client.send_and_confirm_transaction(&create_minter_tx).await {
-        println!("{e:#?}");
-        return Err(anyhow::Error::msg(e));
+    match client.send_and_confirm_transaction(&create_minter_tx).await {
+        Ok(sig) => {
+            println!("Successful: https://explorer.solana.com/tx/{sig}")
+        }
+        Err(e) => return Err(anyhow::Error::msg(format!("{e:#?}"))),
     };
 
     println!("Initialized Minter for {collection_name}");
