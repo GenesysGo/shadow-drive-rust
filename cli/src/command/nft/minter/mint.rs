@@ -58,7 +58,7 @@ pub(super) async fn process(
             .to_account_metas(None),
         )],
         Some(&signer.pubkey()),
-        &[signer],
+        &[signer as &dyn Signer, &mint_keypair as &dyn Signer],
         client.get_latest_blockhash()?,
     );
 
