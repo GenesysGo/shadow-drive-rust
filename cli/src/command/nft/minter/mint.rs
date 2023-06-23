@@ -14,6 +14,11 @@ use solana_sdk::instruction::Instruction;
 use solana_sdk::transaction::Transaction;
 use solana_sdk::{system_program, sysvar};
 
+const COMPUTE: Pubkey = Pubkey::new_from_array([
+    3, 6, 70, 111, 229, 33, 23, 50, 255, 236, 173, 186, 114, 195, 155, 231, 188, 140, 229, 187,
+    197, 247, 18, 107, 44, 67, 155, 58, 64, 0, 0, 0,
+]);
+
 pub(super) async fn process(
     signer: &impl Signer,
     shadowy_super_minter: Pubkey,
@@ -34,29 +39,38 @@ pub(super) async fn process(
     // Build mint tx
     let mint_keypair = Keypair::new(); // never used after this
     let mint_tx = Transaction::new_signed_with_payer(
-        &[Instruction::new_with_bytes(
-            shadowy_super_minter::ID,
-            MintInstruction {}.data().as_ref(),
-            MintAccounts {
-                shadowy_super_minter,
-                minter: signer.pubkey(),
-                minter_ata: spl_associated_token_account::get_associated_token_address(
-                    &signer.pubkey(),
-                    &mint_keypair.pubkey(),
-                ),
-                payer_pda: get_payer_pda(&mint_keypair.pubkey()),
-                mint: mint_keypair.pubkey(),
-                collection,
-                metadata: Metadata::derive_pda(&mint_keypair.pubkey()),
-                creator_group,
-                shadow_nft_standard: shadow_nft_standard::ID,
-                token_program: token_2022::Token2022::id(),
-                associated_token_program: spl_associated_token_account::ID,
-                system_program: system_program::ID,
-                recent_slothashes: sysvar::slot_hashes::ID,
-            }
-            .to_account_metas(None),
-        )],
+        &[
+            Instruction::new_with_borsh::<[u8; 5]>(
+                COMPUTE,
+                &[0x02, 0x00, 0x06, 0x1A, 0x80],
+                vec![],
+            ),
+            Instruction::new_with_bytes(
+                shadowy_super_minter::ID,
+                MintInstruction {}.data().as_ref(),
+                MintAccounts {
+                    shadowy_super_minter,
+                    minter: signer.pubkey(),
+                    minter_ata:
+                        spl_associated_token_account::get_associated_token_address_with_program_id(
+                            &signer.pubkey(),
+                            &mint_keypair.pubkey(),
+                            &token_2022::Token2022::id(),
+                        ),
+                    payer_pda: get_payer_pda(&mint_keypair.pubkey()),
+                    mint: mint_keypair.pubkey(),
+                    collection,
+                    metadata: Metadata::derive_pda(&mint_keypair.pubkey()),
+                    creator_group,
+                    shadow_nft_standard: shadow_nft_standard::ID,
+                    token_program: token_2022::Token2022::id(),
+                    associated_token_program: spl_associated_token_account::ID,
+                    system_program: system_program::ID,
+                    recent_slothashes: sysvar::slot_hashes::ID,
+                }
+                .to_account_metas(None),
+            ),
+        ],
         Some(&signer.pubkey()),
         &[signer as &dyn Signer, &mint_keypair as &dyn Signer],
         client.get_latest_blockhash()?,
