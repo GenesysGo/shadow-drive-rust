@@ -77,7 +77,7 @@ pub(super) async fn process(
     );
 
     // Confirm with user
-    println!("Minting an NFT from:)");
+    println!("Minting an NFT from:");
     println!("    minter        {shadowy_super_minter}");
     #[rustfmt::skip]
     println!("    collection    {} ({collection})", &onchain_collection.name);
