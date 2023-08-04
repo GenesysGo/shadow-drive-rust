@@ -13,7 +13,8 @@ members = [
 version = "0.7.1"
 authors = [
     "Cavey Cool <caveycool@gmail.com>",
-    "Tracy <tracy@tracycodes.com>"
+    "Tracy <tracy@tracycodes.com>",
+	"Khalilnafis <khalil@genesysgo.com>"
 ]
 edition = "2021"
 license = "MIT OR Apache-2.0"
