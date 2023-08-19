@@ -133,10 +133,10 @@ pub enum DriveCommand {
     },
     /// Upload one or more files to a storage account.
     StoreFiles {
-        /// Batch size for file uploads, default 100, only relevant for large
-        /// numbers of uploads
-        #[clap(long, default_value_t=FILE_UPLOAD_BATCH_SIZE)]
-        batch_size: usize,
+        // /// Batch size for file uploads, default 100, only relevant for large
+        // /// numbers of uploads
+        // #[clap(long, default_value_t=FILE_UPLOAD_BATCH_SIZE)]
+        // batch_size: usize,
         /// The storage account on which to upload the files
         #[clap(parse(try_from_str = pubkey_arg))]
         storage_account: Pubkey,
@@ -340,7 +340,6 @@ impl DriveCommand {
                 println!("{:#?}", data);
             }
             DriveCommand::StoreFiles {
-                batch_size,
                 storage_account,
                 files,
             } => {
@@ -352,7 +351,7 @@ impl DriveCommand {
                 );
                 wait_for_user_confirmation(skip_confirm)?;
                 let mut responses = Vec::new();
-                for chunk in files.chunks(*batch_size) {
+                for chunk in files.chunks(5) {
                     let response = async {
                         let resp = client
                             .store_files(
